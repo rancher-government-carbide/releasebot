@@ -14,6 +14,13 @@ Roadmap (ordered most to least important):
 - helm chart
 - tekton integration
 
+## Configuration
+
+| Environment Variable | Description |
+| ----------- | ----------- |
+| slack_token | Oauth token for Your Workspace |
+| slack_channel | Channel ID to receive notifications |
+
 ## Build
 
 ```bash
