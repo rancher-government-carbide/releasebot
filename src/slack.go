@@ -7,11 +7,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 const slackurl string = "https://slack.com/api"
 
-func slacknotif(release Release) error {
+func slacknotif(release Release, owner string, repo string) error {
 
 	token := os.Getenv("slack_token")
 	if token == "" {
@@ -23,32 +24,50 @@ func slacknotif(release Release) error {
 		log.Fatal("Missing slack channel ID")
 	}
 
+	publishedDate, err := time.Parse(time.RFC3339, release.PublishedAt)
+	if err != nil {
+		log.Print(err)
+	}
+
 	var jsonData = []byte(`{
 		"channel": "` + channel + `",
 		"blocks": [
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "` + owner + `/` + repo + ` -  New Release!"
+			}
+		},
+		{
+			"type": "divider"
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*` + repo + ` is now at ver.* ` + release.Name + `!\n\n<https://github.com/` + owner + `/` + repo + `/releases/tag/` + release.TagName + `>"
+			},
+			"accessory": {
+				"type": "image",
+				"image_url": "https://github.com/` + owner + `.png",
+				"alt_text": "repo icon"
+			}
+		},
+		{
+			"type": "context",
+			"elements": [
 			{
-				"type": "header",
-				"text": {
-					"type": "plain_text",
-					"text": "` + release.TagName + `"
-				}
+				"type": "image",
+				"image_url": "` + release.Author.AvatarUrl + `",
+				"alt_text": "author profile img"
 			},
 			{
-				"type": "divider"
-			},
-			{
-				"type": "section",
-				"fields": [
-					{
-						"type": "mrkdwn",
-						"text": "*Current Quarter*\nBudget: $18,000 (ends in 53 days)\nSpend: $4,289.70\nRemain: $13,710.30"
-					},
-					{
-						"type": "mrkdwn",
-						"text": "*Top Expense Categories*\n:airplane: Flights · 30%\n:taxi: Taxi / Uber / Lyft · 24% \n:knife_fork_plate: Client lunch / meetings · 18%"
-					}
-				]
-			},
+				"type": "mrkdwn",
+				"text": "Authored by: ` + release.Author.Login + ` ` + publishedDate.Format("Jan 2, 2006") + `"
+			}
+			]
+		}
 		]
 	}`)
 

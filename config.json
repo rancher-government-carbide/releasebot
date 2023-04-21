@@ -1,0 +1,10 @@
+[
+    {
+        "owner": "golang",
+        "repo": "go"
+    },
+    {
+        "owner": "rancher",
+        "repo": "rancher"
+    }
+]
