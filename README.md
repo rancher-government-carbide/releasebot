@@ -10,25 +10,46 @@ Usually this type of event can be pushed by a github action, however if you wish
 
 Roadmap (ordered most to least important):
 - containerize
-- array of repos as json config file 
 - helm chart
 - tekton integration
 
 ## Configuration
 
-| Environment Variable | Description |
-| ----------- | ----------- |
-| slack_token | Oauth token for Your Workspace |
-| slack_channel | Channel ID to receive notifications |
+| Environment Variable  | Description                           | Optional          |
+| --------------------  | -----------                           | --------          |
+| slack_token           | Oauth token for Your Workspace        | false             |
+| slack_channel         | Channel ID to receive notifications   | false             |
+| github_token          | Github token for authorizing requests | true              |
+| releasebot_config     | Path to json config file              | true              |
 
-## Build
-
-```bash
-go build -o ./build/releasebot
+If the `releasebot_config` variable is not specified releasebot will read the config.json in the current directory. It should contain a json array of github repos that you want to monitor.
+The format for such is shown below:
+```json
+[
+    {
+        "owner": "owner",
+        "repo": "repo"
+    },
+    {
+        "owner": "golang",
+        "repo": "go"
+    },
+    {
+        "owner": "k3s-io",
+        "repo": "k3s"
+    }
+]
 ```
 
-## Run
-
+## Build
 ```bash
-./build/releasebot
+make
+```
+## Run
+```bash
+make clean
+```
+## Help
+```bash
+make help
 ```
