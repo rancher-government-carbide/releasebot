@@ -1,37 +1,36 @@
-.PHONY: build build-linux build-darwin build-windows run clean help
+.PHONY: build container linux darwin windows run clean help 
 
 BINARY_NAME=releasebot
-
-# Set the source files
+CONTAINERTAG=clanktron/releasebot
 SRC=./src/*
-
-# Set the version
 VERSION=0.1.0
-
-# Set the build flags
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
 
 # Build the binary
-build:
-	go build $(BUILD_FLAGS) -o ./build/$(BINARY_NAME) $(SRC)
+build-binary:
+	go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC)
+
+# Build the binary
+container:
+	docker build -t $(CONTAINERTAG) .
 
 # Build the binary for Linux
-build-linux:
+linux:
 	GOOS=linux GOARCH=amd64 go build $(BUILD_FLAGS) -o $(BINARY_NAME)-linux $(SRC)
 # Build the binary for MacOS
-build-darwin:
+darwin:
 	GOOS=darwin GOARCH=amd64 go build $(BUILD_FLAGS) -o $(BINARY_NAME)-darwin $(SRC)
 # Build the binary for Windows
-build-windows:
+windows:
 	GOOS=windows GOARCH=amd64 go build $(BUILD_FLAGS) -o $(BINARY_NAME)-windows $(SRC)
 
 # run the executable
 run:
-	./build/$(BINARY_NAME)
+	./$(BINARY_NAME)
 
 # Clean the binary
 clean:
-	rm -rf build/*
+	rm -f $(BINARY_NAME)
 
 # Run tests
 # test:
@@ -41,8 +40,9 @@ clean:
 help:
 	@echo "Available targets:"
 	@echo "  build           Build the binary"
-	@echo "  build-linux     Build the binary for Linux"
-	@echo "  build-darwin    Build the binary for MacOS"
-	@echo "  build-windows   Build the binary for Windows"
+	@echo "  linux     	     Build the binary for Linux"
+	@echo "  darwin    	     Build the binary for MacOS"
+	@echo "  windows   	     Build the binary for Windows"
+	@echo "  container   	 Build the container
 	@echo "  clean           Clean the binary"
 	@echo "  help            Show help"

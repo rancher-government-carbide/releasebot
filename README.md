@@ -31,12 +31,12 @@ The format for such is shown below:
         "repo": "repo"
     },
     {
-        "owner": "golang",
-        "repo": "go"
+        "owner": "clanktron",
+        "repo": "releasebot"
     },
     {
-        "owner": "k3s-io",
-        "repo": "k3s"
+        "owner": "golang",
+        "repo": "go"
     }
 ]
 ```
@@ -45,7 +45,7 @@ The format for such is shown below:
 ```bash
 make
 ```
-## Run
+## Cleanup
 ```bash
 make clean
 ```
