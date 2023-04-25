@@ -9,7 +9,6 @@ Triggering Tekton pipelines is on the roadmap, along with any other use cases th
 Usually this type of event can be pushed by a github action, however if you wish to monitor repos that you don't control then this may come in handy.
 
 Roadmap (ordered most to least important):
-- containerize
 - helm chart
 - tekton integration
 
@@ -44,6 +43,10 @@ The format for such is shown below:
 ## Build
 ```bash
 make
+```
+## Build Container
+```bash
+make container
 ```
 ## Cleanup
 ```bash
