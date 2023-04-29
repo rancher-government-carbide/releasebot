@@ -23,5 +23,9 @@ go.work/
 # Build directory
 build/
 
-# real secrets
-k8s/real-secret-env.yaml
+# real manifests
+k8s/
+!k8s/example
+
+# misc
+notes.md
