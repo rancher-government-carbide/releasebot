@@ -64,7 +64,7 @@ func slacknotif(release Release, owner string, repo string) error {
 			},
 			{
 				"type": "mrkdwn",
-				"text": "Authored by: ` + release.Author.Login + ` ` + publishedDate.Format("Jan 2, 2006") + `"
+				"text": "Authored by: ` + release.Author.Login + ` on ` + publishedDate.Format("Jan 2, 2006") + ` at ` + publishedDate.Format("3:4pm") + `"
 			}
 			]
 		}

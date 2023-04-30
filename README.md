@@ -20,6 +20,7 @@ Roadmap (ordered most to least important):
 | slack_channel         | Channel ID to receive notifications   | false             |
 | github_token          | Github token for authorizing requests | true              |
 | releasebot_config     | Path to json config file              | true              |
+| interval              | Frequency to query the github api     | true              |
 
 If the `releasebot_config` variable is not specified releasebot will read the config.json in the current directory. It should contain a json array of github repos that you want to monitor.
 The format for such is shown below:

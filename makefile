@@ -2,7 +2,7 @@
 
 BINARY_NAME=releasebot
 CONTAINERTAG=clanktron/releasebot
-SRC=./src/*
+SRC=$(shell git ls-files ./src)
 VERSION=0.1.0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
 
@@ -38,11 +38,11 @@ clean:
 
 # Show help
 help:
-	@echo "Available targets:"
-	@echo "  build           Build the binary"
-	@echo "  linux     	     Build the binary for Linux"
-	@echo "  darwin    	     Build the binary for MacOS"
-	@echo "  windows   	     Build the binary for Windows"
-	@echo "  container   	 Build the container
-	@echo "  clean           Clean the binary"
-	@echo "  help            Show help"
+	@printf "Available targets:\n"
+	@printf "  build 		Build the binary\n"
+	@printf "  linux 		Build the binary for Linux\n"
+	@printf "  darwin 		Build the binary for MacOS\n"
+	@printf "  windows 		Build the binary for Windows\n"
+	@printf "  container 		Build the container\n"
+	@printf "  clean 		Clean the binary\n"
+	@printf "  help 			Show help\n"

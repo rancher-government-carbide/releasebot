@@ -7,6 +7,7 @@
 *.dll
 *.so
 *.dylib
+releasebot
 
 # Test binary, built with `go test -c`
 *.test
@@ -26,6 +27,9 @@ build/
 # real manifests
 k8s/
 !k8s/example
+
+# env credentials
+*.env
 
 # misc
 notes.md

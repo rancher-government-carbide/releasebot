@@ -6,8 +6,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
+
+const github_api_url string = "https://api.github.com"
 
 type Release struct {
 	Name        string `json:"name"`
@@ -34,16 +37,19 @@ func filter_prerelease(releases []Release) []Release {
 	return filteredreleases
 }
 
-func get_latest_release(owner string, repo string) Release {
+func get_latest_release(owner string, repo string) (Release, error) {
+
+	var latestrelease Release
 
 	token := os.Getenv("github_token")
 	if token == "" {
 		log.Print("No provided github token - requests to the github api will be unathenticated (60 requests/hr rate limit)\n")
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, repo), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/%s/releases/latest", github_api_url, owner, repo), nil)
 	if err != nil {
 		log.Print(err)
+		return latestrelease, err
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 	client := &http.Client{}
@@ -51,17 +57,18 @@ func get_latest_release(owner string, repo string) Release {
 	if err != nil {
 		log.Print(err)
 		log.Printf("Failed to get releases for: %s/%s", owner, repo)
+		return latestrelease, err
 	}
 	defer resp.Body.Close()
 
-	var latestrelease Release
 	err = json.NewDecoder(resp.Body).Decode(&latestrelease)
 	if err != nil {
 		log.Print(err)
 		log.Printf("Failed to decode releases for: %s/%s", owner, repo)
+		return latestrelease, err
 	}
 
-	return latestrelease
+	return latestrelease, nil
 }
 
 func get_releases(owner string, repo string) []Release {
@@ -71,7 +78,7 @@ func get_releases(owner string, repo string) []Release {
 		log.Print("No provided github token - requests to the github api will be unathenticated (60 requests/hr rate limit)\n")
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", owner, repo), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/%s/releases", github_api_url, owner, repo), nil)
 	if err != nil {
 		log.Print(err)
 	}
@@ -98,19 +105,36 @@ func get_releases(owner string, repo string) []Release {
 
 func releasecheck(owner string, repo string) {
 
-	latestrelease := get_latest_release(owner, repo)
-	loaded_release := &latestrelease
+	interval, err := strconv.ParseInt(os.Getenv("interval"), 10, 64)
+	if err != nil {
+		log.Printf("Interval environment variable not set or invalid value - defaulting to 5 minutes")
+		interval = 5
+	}
+
+	var loaded_release Release
+	var latest_release Release
+
+	loaded_release, err = get_latest_release(owner, repo)
+	if err != nil {
+		log.Printf("Using placeholder '' as current release for: %s/%s", owner, repo)
+		loaded_release.Name = ""
+	}
 	fmt.Printf("Base release for %s/%s is %s\n", owner, repo, loaded_release.Name)
+
 	for {
-		latestrelease := get_latest_release(owner, repo)
-		if latestrelease.Name != loaded_release.Name {
-			*loaded_release = latestrelease
-			fmt.Printf("Found a new release for %s/%s\n", owner, repo)
-			slacknotif(*loaded_release, owner, repo)
+		latest_release, err = get_latest_release(owner, repo)
+		if err != nil {
+			log.Printf("Failed to get latest release for: %s/%s", owner, repo)
 		} else {
-			fmt.Printf("No new releases for %s/%s\n", owner, repo)
+			if latest_release.Name != loaded_release.Name {
+				loaded_release = latest_release
+				fmt.Printf("Found a new release for %s/%s\n", owner, repo)
+				slacknotif(loaded_release, owner, repo)
+			} else {
+				fmt.Printf("No new releases for %s/%s\n", owner, repo)
+			}
 		}
-		time.Sleep(5 * time.Minute)
+		time.Sleep(time.Duration(interval) * time.Minute)
 	}
 
 }
