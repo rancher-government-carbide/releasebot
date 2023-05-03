@@ -20,6 +20,9 @@ Roadmap (ordered most to least important):
 | github_token          | Github token for authorizing requests             | true              |
 | releasebot_config     | Path to json config file                          | true              |
 | interval              | Frequency to query the github api                 | true              |
+| tekton_listener       | If utilizing Tekton, the event listener name      | true              |
+| tekton_namespace      | If utilizing Tekton, the namespace of EL          | true              |
+| tekton_port           | If utilizing Tekton, the port of the EL           | true              |
 
 If the `releasebot_config` variable is not specified releasebot will read the config.json in the current directory. It should contain a json array of github repos that you want to monitor.
 The format for such is shown below:

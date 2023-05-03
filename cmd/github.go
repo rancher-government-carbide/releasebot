@@ -122,7 +122,7 @@ func get_latest_prerelease(owner string, repo string) Release {
 	return latest_prerelease
 }
 
-func monitor_repo(owner string, repo string, prereleases bool, tekton bool) {
+func monitor_repo(owner string, repo string, prereleases bool, tekton bool, slack bool) {
 
 	interval, err := strconv.ParseInt(os.Getenv("interval"), 10, 64)
 	if err != nil {
@@ -148,7 +148,7 @@ func monitor_repo(owner string, repo string, prereleases bool, tekton bool) {
 		if firstrun {
 			log.Printf("Base release for %s/%s is %s", owner, repo, new_release.TagName)
 		} else {
-			check_release(new_release, loaded_release, owner, repo, tekton)
+			check_release(new_release, loaded_release, owner, repo, tekton, slack)
 		}
 
 		if prereleases {
@@ -161,7 +161,7 @@ func monitor_repo(owner string, repo string, prereleases bool, tekton bool) {
 			if firstrun {
 				log.Printf("Base prerelease for %s/%s is %s", owner, repo, new_prerelease.TagName)
 			} else {
-				check_release(new_prerelease, loaded_prerelease, owner, repo, tekton)
+				check_release(new_prerelease, loaded_prerelease, owner, repo, tekton, slack)
 			}
 		}
 
@@ -173,14 +173,16 @@ func monitor_repo(owner string, repo string, prereleases bool, tekton bool) {
 
 }
 
-func check_release(newrelease Release, oldrelease Release, owner string, repo string, tekton bool) {
+func check_release(newrelease Release, oldrelease Release, owner string, repo string, tekton bool, slack bool) {
 	if newrelease.Name != oldrelease.Name {
-		fmt.Printf("Found a new prerelease for %s/%s\n", owner, repo)
-		slacknotif(newrelease, owner, repo, prereleases_channel)
+		fmt.Printf("Found a new release for %s/%s (%s)\n", owner, repo, newrelease.Name)
+		if slack {
+			slacknotif(newrelease, owner, repo, prereleases_channel)
+		}
 		if tekton {
 			triggertekton(newrelease, owner, repo)
 		}
 	} else {
-		fmt.Printf("No new prereleases for %s/%s\n", owner, repo)
+		fmt.Printf("No new releases for %s/%s\n", owner, repo)
 	}
 }

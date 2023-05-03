@@ -3,48 +3,56 @@
         "owner": "clanktron",
         "repo": "dummy",
         "prereleases": true,
+        "slack": true,
         "tekton": true
     },
     {
         "owner": "rancher",
         "repo": "rancher",
         "prereleases": true,
+        "slack": true,
         "tekton": true
     },
     {
         "owner": "longhorn",
         "repo": "longhorn",
         "prereleases": true,
+        "slack": true,
         "tekton": true
     },
     {
         "owner": "harvester",
         "repo": "harvester",
         "prereleases": true,
+        "slack": true,
         "tekton": true
     },
     {
         "owner": "rancher",
         "repo": "rke2",
         "prereleases": true,
+        "slack": true,
         "tekton": true
     },
     {
         "owner": "k3s-io",
         "repo": "k3s",
         "prereleases": true,
+        "slack": true,
         "tekton": true
     },
     {
         "owner": "kubernetes",
         "repo": "kubernetes",
         "prereleases": true,
+        "slack": true,
         "tekton": true
     },
     {
         "owner": "rancherfederal",
         "repo": "stigatron",
         "prereleases": true,
+        "slack": true,
         "tekton": true
     }
 ]

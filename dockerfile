@@ -1,11 +1,20 @@
 FROM golang:1.20.1-alpine3.17 AS builder
-WORKDIR /tmp
-COPY . .
-RUN apk add make
-RUN make
 
-FROM alpine:latest
+COPY . /build
+
+WORKDIR /build
+
+ENV GOOS=linux
+ENV CGO_ENABLED=0
+
+RUN go get -d -v ./...
+
+RUN go build -v -o releasebot ./cmd
+
+FROM alpine
+
 WORKDIR /app
-COPY --from=builder /tmp/releasebot .
-COPY --from=builder /tmp/config.json .
-CMD ["./releasebot"]
+COPY --from=builder /build/releasebot /usr/local/bin/
+COPY config.json .
+
+CMD ["releasebot"]
