@@ -1,0 +1,24 @@
+[
+    {
+        "owner": "clanktron",
+        "repo": "dummy",
+        "prereleases": true,
+        "tekton": true
+    },
+    {
+        "owner": "rancher",
+        "repo": "rancher",
+        "prereleases": true,
+        "tekton": true
+    },
+    {
+        "owner": "k3s-io",
+        "repo": "k3s",
+        "prereleases": true,
+        "tekton": true
+    },
+    {
+        "owner": "kubernetes",
+        "repo": "kubernetes"
+    }
+]

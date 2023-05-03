@@ -2,13 +2,17 @@
 
 BINARY_NAME=releasebot
 CONTAINERTAG=clanktron/releasebot
-SRC=$(shell git ls-files ./src)
+SRC=$(shell git ls-files ./cmd)
 VERSION=0.1.0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
 
 # Build the binary
 build-binary:
 	go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC)
+
+# Test the binary
+test:
+	go test $(SRC)
 
 # Build the binary
 container:
