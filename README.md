@@ -1,16 +1,14 @@
 # Releasebot
+[![Binary Build and Test](https://github.com/clanktron/releasebot/actions/workflows/go-build.yaml/badge.svg)](https://github.com/clanktron/releasebot/actions/workflows/go-build.yaml)
 
 A rudimentary daemon that monitors github repos for new releases. 
 
-This is meant to push release events to external sources, currently only slack notifications are supported.
-
-Triggering Tekton pipelines is on the roadmap, along with any other use cases that present themselves.
+This is meant to push release events to external sources, currently only slack notifications and tekton pipelines are supported.
 
 Usually this type of event can be pushed by a github action, however if you wish to monitor repos that you don't control then this may come in handy.
 
 Roadmap (ordered most to least important):
 - helm chart
-- tekton integration
 
 ## Configuration
 
@@ -30,20 +28,20 @@ The format for such is shown below:
     {
         "owner": "owner",
         "repo": "repo",
-        "prereleases": "true",
-        "tekton": "true"
+        "prereleases": true,
+        "tekton": true
     },
     {
         "owner": "clanktron",
         "repo": "releasebot"
-        "prereleases": "true",
-        "tekton": "true"
+        "prereleases": true,
+        "tekton": true
     },
     {
         "owner": "golang",
         "repo": "go"
-        "prereleases": "false",
-        "tekton": "false"
+        "prereleases": false,
+        "tekton": false
     }
 ]
 ```
