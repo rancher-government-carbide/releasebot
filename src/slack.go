@@ -12,16 +12,14 @@ import (
 
 const slackurl string = "https://slack.com/api"
 
-func slacknotif(release Release, owner string, repo string) error {
+var token = os.Getenv("slack_token")
+var releases_channel = os.Getenv("releases_channel")
+var prerelease_channel = os.Getenv("prerelease_channel")
 
-	token := os.Getenv("slack_token")
+func slacknotif(release Release, owner string, repo string, channel string) error {
+
 	if token == "" {
 		log.Fatal("Missing slack token")
-	}
-
-	channel := os.Getenv("slack_channel")
-	if channel == "" {
-		log.Fatal("Missing slack channel ID")
 	}
 
 	publishedDate, err := time.Parse(time.RFC3339, release.PublishedAt)

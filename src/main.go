@@ -13,7 +13,7 @@ func main() {
 	}
 
 	for i := 0; i < len(config); i++ {
-		go releasecheck(config[i].Owner, config[i].Repo)
+		go monitor_repo(config[i].Owner, config[i].Repo, config[i].Prereleases, config[i].Tekton)
 	}
 
 	for {

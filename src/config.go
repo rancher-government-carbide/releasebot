@@ -11,9 +11,10 @@ import (
 // )
 
 type Repository struct {
-	Owner      string `json:"owner"`
-	Repo       string `json:"repo"`
-	Prerelease bool   `json:"prerelease"`
+	Owner       string `json:"owner"`
+	Repo        string `json:"repo"`
+	Prereleases bool   `json:"prereleases"`
+	Tekton      bool   `json:"tekton"`
 }
 
 func loadConfig(config *[]Repository) error {
