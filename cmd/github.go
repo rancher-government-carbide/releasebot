@@ -62,8 +62,6 @@ func filter_prereleases(releases []Release) []Release {
 			filteredreleases = append(filteredreleases, release)
 		}
 	}
-	// only checking the first 10 results
-	filteredreleases = filteredreleases[:10]
 	return filteredreleases
 }
 
@@ -74,8 +72,6 @@ func filter_releases(releases []Release) []Release {
 			filteredreleases = append(filteredreleases, release)
 		}
 	}
-	// only checking the first 10 results
-	filteredreleases = filteredreleases[:10]
 	return filteredreleases
 }
 
@@ -113,13 +109,17 @@ func get_latest_release(owner string, repo string) (Release, error) {
 	return latestrelease, nil
 }
 
-func get_latest_prerelease(owner string, repo string) (Release, error) {
+func get_latest_prerelease(owner string, repo string) Release {
 
 	var releases []Release
+	var latest_prerelease Release
 	releases = get_releases(owner, repo)
 	releases = filter_releases(releases)
+	if len(releases) > 0 {
+		latest_prerelease = releases[0]
+	}
 
-	return releases[0], nil
+	return latest_prerelease
 }
 
 func monitor_repo(owner string, repo string, prereleases bool, tekton bool) {
@@ -131,63 +131,56 @@ func monitor_repo(owner string, repo string, prereleases bool, tekton bool) {
 	}
 
 	var loaded_release Release
-	var latest_release Release
+	var new_release Release
 
 	var loaded_prerelease Release
-	var latest_prerelease Release
+	var new_prerelease Release
 
-	loaded_release, err = get_latest_release(owner, repo)
-	if err != nil {
-		log.Printf("Using placeholder '' as current release for: %s/%s", owner, repo)
-		loaded_release.Name = ""
-	}
-	fmt.Printf("Base release for %s/%s is %s\n", owner, repo, loaded_release.Name)
-
-	loaded_prerelease, err = get_latest_prerelease(owner, repo)
-	if err != nil {
-		log.Printf("Using placeholder '' as current prerelease for: %s/%s", owner, repo)
-		loaded_release.Name = ""
-	}
-	fmt.Printf("Base prerelease for %s/%s is %s\n", owner, repo, loaded_prerelease.Name)
+	var firstrun bool = true
 
 	for {
 
-		latest_release, err = get_latest_release(owner, repo)
+		new_release, err = get_latest_release(owner, repo)
 		if err != nil {
 			log.Printf("Failed to get latest release for: %s/%s", owner, repo)
+		}
+
+		if firstrun {
+			log.Printf("Base release for %s/%s is %s", owner, repo, new_release.TagName)
 		} else {
-			if latest_release.Name != loaded_release.Name {
-				loaded_release = latest_release
-				fmt.Printf("Found a new release for %s/%s\n", owner, repo)
-				slacknotif(loaded_release, owner, repo, releases_channel)
-				if tekton {
-					triggertekton(loaded_release, owner, repo)
-				}
-			} else {
-				fmt.Printf("No new releases for %s/%s\n", owner, repo)
-			}
+			check_release(new_release, loaded_release, owner, repo, tekton)
 		}
 
 		if prereleases {
 
-			latest_prerelease, err = get_latest_prerelease(owner, repo)
-			if err != nil {
-				log.Printf("Failed to get latest release for: %s/%s", owner, repo)
+			new_prerelease = get_latest_prerelease(owner, repo)
+			// if err != nil {
+			// 	log.Printf("Failed to get latest prerelease for: %s/%s", owner, repo)
+			// }
+
+			if firstrun {
+				log.Printf("Base prerelease for %s/%s is %s", owner, repo, new_prerelease.TagName)
 			} else {
-				if latest_prerelease.Name != loaded_prerelease.Name {
-					loaded_prerelease = latest_prerelease
-					fmt.Printf("Found a new release for %s/%s\n", owner, repo)
-					slacknotif(loaded_release, owner, repo, prerelease_channel)
-					if tekton {
-						triggertekton(loaded_release, owner, repo)
-					}
-				} else {
-					fmt.Printf("No new releases for %s/%s\n", owner, repo)
-				}
+				check_release(new_prerelease, loaded_prerelease, owner, repo, tekton)
 			}
 		}
 
+		loaded_release = new_release
+		loaded_prerelease = new_prerelease
+		firstrun = false
 		time.Sleep(time.Duration(interval) * time.Minute)
 	}
 
+}
+
+func check_release(newrelease Release, oldrelease Release, owner string, repo string, tekton bool) {
+	if newrelease.Name != oldrelease.Name {
+		fmt.Printf("Found a new prerelease for %s/%s\n", owner, repo)
+		slacknotif(newrelease, owner, repo, prereleases_channel)
+		if tekton {
+			triggertekton(newrelease, owner, repo)
+		}
+	} else {
+		fmt.Printf("No new prereleases for %s/%s\n", owner, repo)
+	}
 }

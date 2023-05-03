@@ -14,7 +14,7 @@ const slackurl string = "https://slack.com/api"
 
 var token = os.Getenv("slack_token")
 var releases_channel = os.Getenv("releases_channel")
-var prerelease_channel = os.Getenv("prerelease_channel")
+var prereleases_channel = os.Getenv("prereleases_channel")
 
 func slacknotif(release Release, owner string, repo string, channel string) error {
 
@@ -27,6 +27,11 @@ func slacknotif(release Release, owner string, repo string, channel string) erro
 		log.Print(err)
 	}
 
+	release_type := "Release"
+	if release.Prerelease {
+		release_type = "Prerelease"
+	}
+
 	var jsonData = []byte(`{
 		"channel": "` + channel + `",
 		"blocks": [
@@ -34,7 +39,7 @@ func slacknotif(release Release, owner string, repo string, channel string) erro
 			"type": "header",
 			"text": {
 				"type": "plain_text",
-				"text": "` + owner + `/` + repo + ` -  New Release!"
+				"text": "` + owner + `/` + repo + ` -  New ` + release_type + `!"
 			}
 		},
 		{
@@ -44,7 +49,7 @@ func slacknotif(release Release, owner string, repo string, channel string) erro
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": "*` + repo + ` is now at ver.* ` + release.Name + `!\n\n<https://github.com/` + owner + `/` + repo + `/releases/tag/` + release.TagName + `>"
+				"text": "` + release.Name + ` is now available!\n\n<https://github.com/` + owner + `/` + repo + `/releases/tag/` + release.TagName + `>"
 			},
 			"accessory": {
 				"type": "image",
