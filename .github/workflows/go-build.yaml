@@ -1,0 +1,19 @@
+name: Binary Build and Test
+
+on:
+  push:
+    branches: 
+      - main
+  pull_request:
+    branches: 
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build the Binary
+        run: make
+      - name: Test the Binary
+        run: make test

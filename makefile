@@ -1,4 +1,4 @@
-.PHONY: build container linux darwin windows run clean help 
+.PHONY: container test linux darwin windows env run clean help 
 
 BINARY_NAME=releasebot
 CONTAINERTAG=clanktron/releasebot
@@ -7,11 +7,11 @@ VERSION=0.1.0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
 
 # Build the binary
-build-binary:
+releasebot:
 	go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC)
 
 # Test the binary
-test:
+test: releasebot
 	go test $(SRC)
 
 # Build the binary
@@ -27,6 +27,9 @@ darwin:
 # Build the binary for Windows
 windows:
 	GOOS=windows GOARCH=amd64 go build $(BUILD_FLAGS) -o $(BINARY_NAME)-windows $(SRC)
+
+env:
+	set -a; source .env; set +a
 
 # run the executable
 run:
