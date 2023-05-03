@@ -1,4 +1,4 @@
-.PHONY: container test linux darwin windows env run clean help 
+.PHONY: container container-push test linux darwin windows env run clean help 
 
 BINARY_NAME=releasebot
 CONTAINERTAG=clanktron/releasebot
@@ -8,15 +8,19 @@ BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
 
 # Build the binary
 releasebot:
-	go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC)
+	go mod tidy && go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC)
 
 # Test the binary
 test: releasebot
 	go test $(SRC)
 
-# Build the binary
+# Build the container image
 container:
 	docker build -t $(CONTAINERTAG) .
+	
+# Push the binary
+container-push: container
+	docker push $(CONTAINERTAG)
 
 # Build the binary for Linux
 linux:
