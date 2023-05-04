@@ -15,6 +15,7 @@ type Repository struct {
 	Repo        string `json:"repo"`
 	Prereleases bool   `json:"prereleases"`
 	Tekton      bool   `json:"tekton"`
+	Slack       bool   `json:"slack"`
 }
 
 func loadConfig(config *[]Repository) error {

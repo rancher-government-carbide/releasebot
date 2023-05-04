@@ -13,7 +13,7 @@ func main() {
 	}
 
 	for i := 0; i < len(config); i++ {
-		go monitor_repo(config[i].Owner, config[i].Repo, config[i].Prereleases, config[i].Tekton)
+		go monitor_repo(config[i].Owner, config[i].Repo, config[i].Prereleases, config[i].Tekton, config[i].Slack)
 	}
 
 	for {

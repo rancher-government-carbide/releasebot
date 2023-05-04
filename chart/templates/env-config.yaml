@@ -1,0 +1,15 @@
+# https://kubernetes.io/docs/concepts/configuration/configmap/
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "releasebot.fullname" . }}-env
+data:
+  releasebot_config: /app/config.json
+  interval: {{ .Values.config.interval | quote }}
+  tekton_namespace: {{ .Values.config.tekton.namespace | quote }}
+  tekton_listener: {{ .Values.config.tekton.listener | quote }}
+  tekton_port: {{ .Values.config.tekton.port | quote }}
+  releases_channel: {{ .Values.config.slack.releases.channel | b64enc }}
+  {{- if .Values.config.slack.prereleases.enable }}
+  prereleases_channel: {{ .Values.config.slack.prereleases.channel | b64enc }}
+  {{- end }}

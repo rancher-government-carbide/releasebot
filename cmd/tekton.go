@@ -6,15 +6,18 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
-const tektonport int = 8080
+var tekton_namespace = os.Getenv("tekton_namespace")
+var tekton_listener = os.Getenv("tekton_listener")
+var tekton_port = os.Getenv("tekton_port")
 
 func triggertekton(release Release, owner string, repo string) error {
-
-	var tektonurl string = fmt.Sprintf("http://el-%s-release-listener.ssf.svc.cluster.local:%d", repo, tektonport)
+	var tektonurl string = fmt.Sprintf("http://el-%s-listener.%s.svc.cluster.local:%s", tekton_listener, tekton_namespace, tekton_port)
 
 	var jsonData = []byte(`{
+		"product": "` + repo + `",
 		"release": "` + release.TagName + `"
 	}`)
 
