@@ -9,7 +9,8 @@ ENV CGO_ENABLED=0
 
 RUN go get -d -v ./...
 
-RUN go build -v -o releasebot ./cmd
+RUN apk add make git && \ 
+    make
 
 FROM alpine
 
