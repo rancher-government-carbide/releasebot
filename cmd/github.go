@@ -174,8 +174,12 @@ func monitor_repo(owner string, repo string, prereleases bool, tekton bool, slac
 }
 
 func check_release(newrelease Release, oldrelease Release, owner string, repo string, tekton bool, slack bool) {
+	release_type := "release"
+	if newrelease.Prerelease {
+		release_type = "prerelease"
+	}
 	if newrelease.Name != oldrelease.Name {
-		fmt.Printf("Found a new release for %s/%s (%s)\n", owner, repo, newrelease.Name)
+		fmt.Printf("Found a new %s for %s/%s (%s)\n", release_type, owner, repo, newrelease.Name)
 		if slack {
 			slacknotif(newrelease, owner, repo, prereleases_channel)
 		}
@@ -183,6 +187,6 @@ func check_release(newrelease Release, oldrelease Release, owner string, repo st
 			triggertekton(newrelease, owner, repo)
 		}
 	} else {
-		fmt.Printf("No new releases for %s/%s\n", owner, repo)
+		fmt.Printf("No new %s for %s/%s\n", release_type, owner, repo)
 	}
 }
