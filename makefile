@@ -17,11 +17,11 @@ test: releasebot
 
 # Build the container image
 container:
-	docker build -t $(CONTAINERTAG) .
+	docker build -t $(CONTAINERTAG):$(VERSION) .
 	
 # Push the binary
 container-push: container
-	docker push $(CONTAINERTAG)
+	docker push $(CONTAINERTAG):$(VERSION)
 
 # Build the binary for Linux
 linux:
