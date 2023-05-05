@@ -40,7 +40,8 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
           - name: config
-            mountPath: /app
+            mountPath: /app/config.json
+            subPath: config.json
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -56,4 +57,4 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: {{ include "releasebot.fullname" . }}-env
+            name: {{ include "releasebot.fullname" . }}-config
