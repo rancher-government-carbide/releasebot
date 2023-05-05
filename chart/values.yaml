@@ -12,12 +12,8 @@ image:
 
 config:
   interval: 5 # In minutes
-  
-  # If using an existing secret for the slack token and github token
-  existingSecret: ''
-
   githubToken: abcdef1234567
-
+  
   slack:
     token: abcdef1234567
     releases:
