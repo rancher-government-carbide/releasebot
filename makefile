@@ -4,11 +4,12 @@ BINARY_NAME=releasebot
 CONTAINERTAG=clanktron/releasebot
 SRC=$(shell git ls-files ./cmd)
 VERSION=0.1.0
+GOENV=GOARCH=amd64 CGO_ENABLED=0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
 
 # Build the binary
 releasebot:
-	go mod tidy && go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC)
+	go mod tidy && go get -v -d ./... && $(GOENV) go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC)
 
 # Test the binary
 test: releasebot
@@ -24,36 +25,31 @@ container-push: container
 
 # Build the binary for Linux
 linux:
-	GOOS=linux GOARCH=amd64 go build $(BUILD_FLAGS) -o $(BINARY_NAME)-linux $(SRC)
+	GOOS=linux $(GOENV) go build $(BUILD_FLAGS) -o $(BINARY_NAME)-linux $(SRC)
 # Build the binary for MacOS
 darwin:
-	GOOS=darwin GOARCH=amd64 go build $(BUILD_FLAGS) -o $(BINARY_NAME)-darwin $(SRC)
+	GOOS=darwin $(GOENV) go build $(BUILD_FLAGS) -o $(BINARY_NAME)-darwin $(SRC)
 # Build the binary for Windows
 windows:
-	GOOS=windows GOARCH=amd64 go build $(BUILD_FLAGS) -o $(BINARY_NAME)-windows $(SRC)
+	GOOS=windows $(GOENV) go build $(BUILD_FLAGS) -o $(BINARY_NAME)-windows $(SRC)
 
 env:
 	set -a; source .env; set +a
-
-# run the executable
-run:
-	./$(BINARY_NAME)
 
 # Clean the binary
 clean:
 	rm -f $(BINARY_NAME)
 
-# Run tests
-# test:
-#	go test ./...
-
 # Show help
 help:
 	@printf "Available targets:\n"
-	@printf "  build 		Build the binary\n"
+	@printf "  releasebot 		Build the binary\n"
+	@printf "  test 			Build and test the binary\n"
 	@printf "  linux 		Build the binary for Linux\n"
 	@printf "  darwin 		Build the binary for MacOS\n"
 	@printf "  windows 		Build the binary for Windows\n"
 	@printf "  container 		Build the container\n"
-	@printf "  clean 		Clean the binary\n"
+	@printf "  container-push 	Build and push the container\n"
+	@printf "  env 			apply .env file in PWD\n"
+	@printf "  clean 		Clean build results\n"
 	@printf "  help 			Show help\n"

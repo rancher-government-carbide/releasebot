@@ -7,9 +7,6 @@ This is meant to push release events to external sources, currently only slack n
 
 Usually this type of event can be pushed by a github action, however if you wish to monitor repos that you don't control then this may come in handy.
 
-Roadmap (ordered most to least important):
-- helm chart
-
 ## Configuration
 
 | Environment Variable  | Description                                       | Optional          |
@@ -32,18 +29,21 @@ The format for such is shown below:
         "owner": "owner",
         "repo": "repo",
         "prereleases": true,
+        "slack": true,
         "tekton": true
     },
     {
         "owner": "clanktron",
         "repo": "releasebot"
         "prereleases": true,
+        "slack": false,
         "tekton": true
     },
     {
         "owner": "golang",
         "repo": "go"
         "prereleases": false,
+        "slack": true
         "tekton": false
     }
 ]
@@ -52,14 +52,6 @@ The format for such is shown below:
 ## Build Binary
 ```bash
 make
-```
-## Test Binary
-```bash
-make test
-```
-## Build Container
-```bash
-make container
 ```
 ## Cleanup
 ```bash
