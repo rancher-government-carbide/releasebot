@@ -14,6 +14,17 @@ var tekton_listener = os.Getenv("tekton_listener")
 var tekton_port = os.Getenv("tekton_port")
 
 func triggertekton(release Release, owner string, repo string) error {
+
+	if tekton_namespace == "" {
+		tekton_namespace = "tekton-pipelines"
+	}
+	if tekton_listener == "" {
+		tekton_listener = repo
+	}
+	if tekton_port == "" {
+		tekton_port = "8080"
+	}
+
 	var tektonurl string = fmt.Sprintf("http://el-%s-listener.%s.svc.cluster.local:%s", tekton_listener, tekton_namespace, tekton_port)
 
 	var jsonData = []byte(`{
