@@ -40,7 +40,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
           - name: config
-            mountPath: /app/config.json
+            mountPath: /config.json
             subPath: config.json
       {{- with .Values.nodeSelector }}
       nodeSelector:

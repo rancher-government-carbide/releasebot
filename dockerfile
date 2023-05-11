@@ -1,15 +1,12 @@
 FROM golang:1.20.1-alpine3.17 AS builder
 COPY . /build
 WORKDIR /build
-RUN apk add make git && make
+RUN apk add make git 
+RUN apk add --no-cache ca-certificates
+RUN make
 
-FROM registry.suse.com/bci/bci-micro:15.4
-RUN mkdir -p /home/stigatron && \
-    chown -R 1000:1000 /home/stigatron && \
-    echo "stigatron:x:1000:1000:stigatron:/tmp:/bin/bash" >> /etc/passwd && \
-    echo "stigatron:x:1000:" >> /etc/group
-USER 1000
-WORKDIR /app
-COPY --from=builder /build/releasebot /usr/local/bin/
-COPY config.json .
-CMD ["releasebot"]
+FROM scratch
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /build/releasebot /
+COPY config.json /
+CMD ["/releasebot"]

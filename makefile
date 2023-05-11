@@ -8,7 +8,7 @@ GOENV=GOARCH=amd64 CGO_ENABLED=0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
 
 # Build the binary
-releasebot:
+releasebot: clean
 	go mod tidy && go get -v -d ./... && $(GOENV) go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC)
 
 # Test the binary
@@ -17,11 +17,11 @@ test: releasebot
 
 # Build the container image
 container:
-	docker build -t $(CONTAINERTAG):$(VERSION) .
+	docker build -t $(CONTAINERTAG):$(VERSION) . && docker image tag $(CONTAINERTAG):$(VERSION) $(CONTAINERTAG):latest
 	
 # Push the binary
 container-push: container
-	docker push $(CONTAINERTAG):$(VERSION)
+	docker push $(CONTAINERTAG):$(VERSION) && docker push $(CONTAINERTAG):latest 
 
 # Build the binary for Linux
 linux:

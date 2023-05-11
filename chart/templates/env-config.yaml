@@ -4,7 +4,7 @@ apiVersion: v1
 metadata:
   name: {{ include "releasebot.fullname" . }}-env
 data:
-  releasebot_config: /app/config.json
+  releasebot_config: /config.json
   interval: {{ .Values.config.interval | quote }}
   tekton_namespace: {{ .Values.config.tekton.namespace | quote }}
   tekton_listener: {{ .Values.config.tekton.listener | quote }}
