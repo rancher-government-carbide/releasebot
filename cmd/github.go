@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -23,6 +24,27 @@ type Release struct {
 		AvatarUrl string `json:"avatar_url"`
 		HtmlUrl   string `json:"html_url"`
 	} `json:"author"`
+}
+
+func sort_by_published_date(releases []Release) []Release {
+
+	sort.Slice(releases, func(i, j int) bool {
+		// Parse the ISO 8601 timestamps into time.Time objects
+		t1, err := time.Parse(time.RFC3339, releases[i].PublishedAt)
+		if err != nil {
+			return false
+		}
+
+		t2, err := time.Parse(time.RFC3339, releases[j].PublishedAt)
+		if err != nil {
+			return false
+		}
+
+		// Compare the timestamps
+		return t1.After(t2)
+	})
+
+	return releases
 }
 
 func get_releases(owner string, repo string) ([]Release, error) {
@@ -55,6 +77,7 @@ func get_releases(owner string, repo string) ([]Release, error) {
 	return releases, nil
 }
 
+// filters all prereleases out of the array (leaves only releases)
 func filter_prereleases(releases []Release) []Release {
 	var filteredreleases []Release
 	for _, release := range releases {
@@ -65,6 +88,7 @@ func filter_prereleases(releases []Release) []Release {
 	return filteredreleases
 }
 
+// filters all releases out of the array (leaves only prereleases)
 func filter_releases(releases []Release) []Release {
 	var filteredreleases []Release
 	for _, release := range releases {
@@ -75,7 +99,7 @@ func filter_releases(releases []Release) []Release {
 	return filteredreleases
 }
 
-// fetches all releases from repo and returns the 5 latest releases - can fetch only releases or prereleases
+// fetches all releases from repo and returns the 5 latest releases - can fetch either releases or prereleases
 func get_latest_releases(owner string, repo string, prerelease bool) ([]Release, error) {
 
 	var latest_releases []Release
@@ -88,6 +112,9 @@ func get_latest_releases(owner string, repo string, prerelease bool) ([]Release,
 	} else {
 		latest_releases = filter_prereleases(latest_releases)
 	}
+	// github api is generally already sorted by date already but they don't officially guarantee such
+	latest_releases = sort_by_published_date(latest_releases)
+	// only the latest 5 are relevant
 	if len(latest_releases) > 5 {
 		latest_releases = latest_releases[:6]
 	}
