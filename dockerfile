@@ -3,6 +3,7 @@ COPY . /build
 WORKDIR /build
 RUN apk add make git 
 RUN apk add --no-cache ca-certificates
+RUN make dependencies
 RUN make
 
 FROM scratch
