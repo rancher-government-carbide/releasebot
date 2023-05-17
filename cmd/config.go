@@ -6,10 +6,6 @@ import (
 	"os"
 )
 
-// import (
-//
-// )
-
 type Repository struct {
 	Owner       string `json:"owner"`
 	Repo        string `json:"repo"`
