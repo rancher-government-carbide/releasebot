@@ -6,6 +6,7 @@ SRC=$(shell git ls-files ./cmd)
 VERSION=0.1.0
 GOENV=GOARCH=amd64 CGO_ENABLED=0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
+CONTAINER_CLI=nerdctl
 
 # Build the binary
 releasebot: clean
@@ -20,11 +21,11 @@ test: releasebot
 
 # Build the container image
 container:
-	docker build -t $(CONTAINERTAG):$(VERSION) . && docker image tag $(CONTAINERTAG):$(VERSION) $(CONTAINERTAG):latest
+	$(CONTAINER_CLI) build -t $(CONTAINERTAG):$(VERSION) . && $(CONTAINER_CLI) image tag $(CONTAINERTAG):$(VERSION) $(CONTAINERTAG):latest
 	
 # Push the binary
 container-push: container
-	docker push $(CONTAINERTAG):$(VERSION) && docker push $(CONTAINERTAG):latest 
+	$(CONTAINER_CLI) push $(CONTAINERTAG):$(VERSION) && $(CONTAINER_CLI) push $(CONTAINERTAG):latest 
 
 # Build the binary for Linux
 linux:
@@ -46,7 +47,7 @@ clean:
 # Show help
 help:
 	@printf "Available targets:\n"
-	@printf "  releasebot 		Build the binary\n"
+	@printf "  $(BINARY_NAME) 		Build the binary\n"
 	@printf "  test 			Build and test the binary\n"
 	@printf "  linux 		Build the binary for Linux\n"
 	@printf "  darwin 		Build the binary for MacOS\n"
