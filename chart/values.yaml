@@ -23,7 +23,6 @@ config:
     releases:
       channel: example-release-channel
     prereleases:
-      enabled: false
       channel: example-prerelease-channel
   
   tekton:
@@ -36,7 +35,7 @@ config:
   - owner: rancher
     repo: rancher
     slack: false
-    prerelease: false
+    prereleases: false
     tekton: true
     
 imagePullSecrets: []

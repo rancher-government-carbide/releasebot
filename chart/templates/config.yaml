@@ -9,7 +9,7 @@ data:
         {
             "owner": "{{ $repo.owner }}",
             "repo": "{{ $repo.repo }}",
-            "prerelease": {{ $repo.prerelease }},
+            "prereleases": {{ $repo.prereleases }},
             "slack": {{ $repo.slack }},
             "tekton": {{ $repo.tekton }}
         }{{ if ne $index (sub (len $.Values.config.repos) 1) }},{{end}}
