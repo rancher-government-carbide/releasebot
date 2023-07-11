@@ -200,7 +200,7 @@ func check_releases(newreleases []Release, oldreleases []Release, owner string, 
 			log.Printf("Found a new %s for %s/%s (%s)\n", release_type, owner, repo, release.Name)
 			no_new_releases = false
 			if slack {
-				slacknotif(release, owner, repo, prereleases_channel)
+				slacknotif(release, owner, repo, releases_channel)
 			}
 			if tekton {
 				triggertekton(release, owner, repo)
