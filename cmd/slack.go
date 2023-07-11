@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -85,10 +84,10 @@ func slacknotif(release Release, owner string, repo string, channel string) erro
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("response Status:", resp.Status)
+	log.Println("response Status:", resp.Status)
 	// fmt.Println("response Headers:", resp.Header)
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
+	log.Println("response Body:", string(body))
 
 	return nil
 }

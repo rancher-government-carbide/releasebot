@@ -199,7 +199,7 @@ func check_releases(newreleases []Release, oldreleases []Release, owner string, 
 	no_new_releases := true
 	for _, release := range newreleases {
 		if !oldrelease_map[release.TagName] {
-			fmt.Printf("Found a new %s for %s/%s (%s)\n", release_type, owner, repo, release.Name)
+			log.Printf("Found a new %s for %s/%s (%s)\n", release_type, owner, repo, release.Name)
 			no_new_releases = false
 			if slack {
 				slacknotif(release, owner, repo, channel)
@@ -213,7 +213,7 @@ func check_releases(newreleases []Release, oldreleases []Release, owner string, 
 	}
 
 	if no_new_releases {
-		fmt.Printf("No new %ss for %s/%s\n", release_type, owner, repo)
+		log.Printf("No new %ss for %s/%s\n", release_type, owner, repo)
 	}
 
 }
