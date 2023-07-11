@@ -183,8 +183,10 @@ func monitor_repo(owner string, repo string, prereleases bool, tekton bool, slac
 // checks an array of newly fetched releases against releases currently in memory - if a new release is found and slack/tekton is enabled, the respective POST request is sent
 func check_releases(newreleases []Release, oldreleases []Release, owner string, repo string, tekton bool, slack bool) {
 	release_type := "release"
+	channel := releases_channel
 	if newreleases[0].Prerelease {
 		release_type = "prerelease"
+		channel = prereleases_channel
 	}
 
 	// Create a map of tagnames in old releases
@@ -200,7 +202,7 @@ func check_releases(newreleases []Release, oldreleases []Release, owner string, 
 			fmt.Printf("Found a new %s for %s/%s (%s)\n", release_type, owner, repo, release.Name)
 			no_new_releases = false
 			if slack {
-				slacknotif(release, owner, repo, prereleases_channel)
+				slacknotif(release, owner, repo, channel)
 			}
 			if tekton {
 				triggertekton(release, owner, repo)
