@@ -62,3 +62,12 @@ make clean
 ```bash
 make help
 ```
+## Development
+
+#### Git Hooks
+```bash
+# copy hooks to .git/hooks/
+./bin/install-hooks
+# symlink hooks to .git/hooks/
+./bin/install-hooks link
+```

@@ -20,13 +20,11 @@ dependencies:
 # Test the binary
 test: $(BINARY_NAME)
 	go test $(TEST_FLAGS) $(SRC) 
-	make clean
 
 # Run linters
 lint: $(BINARY_NAME)
 	go vet $(SRC)
 	staticcheck $(SRC)
-	make clean
 
 # Build the container image
 container: clean
@@ -53,13 +51,13 @@ clean:
 # Show help
 help:
 	@printf "Available targets:\n"
-	@printf "  $(BINARY_NAME) 		Build the binary\n"
+	@printf "  $(BINARY_NAME) 		Build the binary (default)\n"
 	@printf "  test 			Build and test the binary\n"
+	@printf "  lint 			Build and lint the binary\n"
 	@printf "  linux 		Build the binary for Linux\n"
 	@printf "  darwin 		Build the binary for MacOS\n"
 	@printf "  windows 		Build the binary for Windows\n"
 	@printf "  container 		Build the container\n"
 	@printf "  container-push 	Build and push the container\n"
-	@printf "  env 			apply .env file in PWD\n"
 	@printf "  clean 		Clean build results\n"
 	@printf "  help 			Show help\n"
