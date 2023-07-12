@@ -1,5 +1,6 @@
 # Releasebot
-[![Binary Build and Test](https://github.com/clanktron/releasebot/actions/workflows/go-build.yaml/badge.svg)](https://github.com/clanktron/releasebot/actions/workflows/go-build.yaml)
+[![Build](https://github.com/clanktron/releasebot/actions/workflows/build.yaml/badge.svg)](https://github.com/clanktron/releasebot/actions/workflows/build.yaml)
+[![Unit Tests](https://github.com/clanktron/releasebot/actions/workflows/test.yaml/badge.svg)](https://github.com/clanktron/releasebot/actions/workflows/test.yaml)
 
 A rudimentary daemon that monitors github repos for new releases. 
 

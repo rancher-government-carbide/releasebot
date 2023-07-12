@@ -1,4 +1,4 @@
-name: Binary Build and Test
+name: Unit Tests
 
 on:
   push:
@@ -13,7 +13,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Build the Binary
-        run: make
       - name: Test the Binary
         run: make test
