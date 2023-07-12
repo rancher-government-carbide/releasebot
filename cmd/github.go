@@ -161,6 +161,9 @@ func monitor_repo(owner string, repo string, prereleases bool, tekton bool, slac
 		if err != nil {
 			log.Printf("Failed to get latest releases for: %s/%s - %v", owner, repo, err)
 		}
+		if len(new_releases) > 4 {
+			new_releases = new_releases[:4]
+		}
 		if check_releases(&loaded_releases_map, new_releases, owner, repo, tekton, slack, false) {
 			log.Printf("No new releases for %s/%s\n", owner, repo)
 		}
@@ -168,6 +171,9 @@ func monitor_repo(owner string, repo string, prereleases bool, tekton bool, slac
 			new_prereleases, err = get_latest_releases(owner, repo, true)
 			if err != nil {
 				log.Printf("Failed to get latest prereleases for: %s/%s - %v", owner, repo, err)
+			}
+			if len(new_prereleases) > 4 {
+				new_prereleases = new_prereleases[:4]
 			}
 			if check_releases(&loaded_prereleases_map, new_prereleases, owner, repo, tekton, slack, true) {
 				log.Printf("No new prereleases for %s/%s\n", owner, repo)
