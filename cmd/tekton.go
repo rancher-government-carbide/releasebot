@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -40,26 +40,26 @@ func triggertekton(release Release, owner string, repo string) error {
 	}
 
 	json_trigger, err := json.Marshal(trigger)
-
+	if err != nil {
+		return err
+	}
 	req, err := http.NewRequest("POST", tektonurl, bytes.NewBuffer(json_trigger))
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
-
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Print(err)
 		return err
 	}
 	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Print(err)
 		return err
-	} else {
-		fmt.Println("response Status:", resp.Status)
-		fmt.Println("response Body:", string(body))
 	}
+	log.Println("tekton response Status:", resp.Status)
+	log.Println("tekton response Body:", string(body))
 
 	return nil
 }

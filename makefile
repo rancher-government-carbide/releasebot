@@ -1,9 +1,10 @@
-.PHONY: dependencies test container container-push linux darwin windows clean help 
+.PHONY: dependencies test lint container container-push linux darwin windows clean help 
 
 BINARY_NAME=releasebot
-CONTAINERTAG=clanktron/releasebot
+CONTAINER_NAME=clanktron/releasebot
 SRC=$(shell git ls-files ./cmd)
 VERSION=0.1.0
+COMMIT_HASH=$(shell git rev-parse HEAD)
 GOENV=GOARCH=amd64 CGO_ENABLED=0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
 TEST_FLAGS=-v -cover -count 2
@@ -17,16 +18,23 @@ dependencies:
 	go mod tidy && go get -v -d ./...
 
 # Test the binary
-test: releasebot
-	go test $(TEST_FLAGS) $(SRC)
+test: $(BINARY_NAME)
+	go test $(TEST_FLAGS) $(SRC) 
+	make clean
+
+# Run linters
+lint: $(BINARY_NAME)
+	go vet $(SRC)
+	staticcheck $(SRC)
+	make clean
 
 # Build the container image
 container: clean
-	$(CONTAINER_CLI) build -t $(CONTAINERTAG):$(VERSION) . && $(CONTAINER_CLI) image tag $(CONTAINERTAG):$(VERSION) $(CONTAINERTAG):latest
+	$(CONTAINER_CLI) build -t $(CONTAINER_NAME):$(COMMIT_HASH) -t $(CONTAINER_NAME):latest .
 	
 # Push the binary
 container-push: container
-	$(CONTAINER_CLI) push $(CONTAINERTAG):$(VERSION) && $(CONTAINER_CLI) push $(CONTAINERTAG):latest 
+	$(CONTAINER_CLI) push $(CONTAINER_NAME):$(COMMIT_HASH) && $(CONTAINER_CLI) push $(CONTAINER_NAME):latest
 
 # Build the binary for Linux
 linux:

@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -76,20 +76,20 @@ func slacknotif(release Release, owner string, repo string) error {
 	}`)
 
 	req, err := http.NewRequest("POST", slackurl+"/chat.postMessage", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	req.Header.Set("Authorization", "Bearer "+token)
-
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Print(err)
+		return err
 	}
 	defer resp.Body.Close()
-
-	log.Println("response Status:", resp.Status)
-	// fmt.Println("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
-	log.Println("response Body:", string(body))
+	body, _ := io.ReadAll(resp.Body)
+	log.Println("slack response Status:", resp.Status)
+	log.Println("slack response Body:", string(body))
 
 	return nil
 }
