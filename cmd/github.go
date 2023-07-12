@@ -117,9 +117,9 @@ func get_latest_releases(owner string, repo string, prerelease bool) ([]Release,
 	// github api is generally already sorted by date already but they don't officially guarantee such
 	latest_releases = sort_by_published_date(latest_releases)
 	// only the latest 5 are relevant
-	if len(latest_releases) > 5 {
-		latest_releases = latest_releases[:6]
-	}
+	// if len(latest_releases) > 5 {
+	// 	latest_releases = latest_releases[:5]
+	// }
 	return latest_releases, nil
 }
 
@@ -131,93 +131,80 @@ func monitor_repo(owner string, repo string, prereleases bool, tekton bool, slac
 		interval = 5
 	}
 
-	var loaded_releases []Release
 	var new_releases []Release
-
-	var loaded_prereleases []Release
 	var new_prereleases []Release
 
-	var firstrun bool = true
+	loaded_releases_map := make(map[string]bool)
+	loaded_prereleases_map := make(map[string]bool)
+
+	base_releases, err := get_latest_releases(owner, repo, false)
+	if err != nil {
+		log.Printf("Failed to get latest releases for: %s/%s - %v", owner, repo, err)
+	}
+	for _, release := range base_releases {
+		if !loaded_releases_map[release.TagName] {
+			loaded_releases_map[release.TagName] = true
+		}
+	}
+	base_prereleases, err := get_latest_releases(owner, repo, true)
+	if err != nil {
+		log.Printf("Failed to get latest releases for: %s/%s - %v", owner, repo, err)
+	}
+	for _, release := range base_prereleases {
+		if !loaded_prereleases_map[release.TagName] {
+			loaded_prereleases_map[release.TagName] = true
+		}
+	}
 
 	for {
-
 		new_releases, err = get_latest_releases(owner, repo, false)
 		if err != nil {
 			log.Printf("Failed to get latest releases for: %s/%s - %v", owner, repo, err)
 		}
-
-		if firstrun {
-			var releasenames []string
-			for _, release := range new_releases {
-				releasenames = append(releasenames, release.TagName)
-			}
-			log.Printf("Base releases for %s/%s are %v", owner, repo, releasenames)
-		} else {
-			check_releases(new_releases, loaded_releases, owner, repo, tekton, slack)
+		if check_releases(&loaded_releases_map, new_releases, owner, repo, tekton, slack, false) {
+			log.Printf("No new releases for %s/%s\n", owner, repo)
 		}
-
 		if prereleases {
-
 			new_prereleases, err = get_latest_releases(owner, repo, true)
 			if err != nil {
 				log.Printf("Failed to get latest prereleases for: %s/%s - %v", owner, repo, err)
 			}
-
-			if firstrun {
-				var prereleasenames []string
-				for _, prerelease := range new_prereleases {
-					prereleasenames = append(prereleasenames, prerelease.TagName)
-				}
-				log.Printf("Base prereleases for %s/%s are %v", owner, repo, prereleasenames)
-			} else {
-				check_releases(new_prereleases, loaded_prereleases, owner, repo, tekton, slack)
+			if check_releases(&loaded_prereleases_map, new_prereleases, owner, repo, tekton, slack, true) {
+				log.Printf("No new prereleases for %s/%s\n", owner, repo)
 			}
 		}
-
-		loaded_releases = new_releases
-		loaded_prereleases = new_prereleases
-		firstrun = false
 		time.Sleep(time.Duration(interval) * time.Minute)
 	}
 
 }
 
-// checks an array of newly fetched releases against releases currently in memory - if a new release is found and slack/tekton is enabled, the respective POST request is sent
-func check_releases(newreleases []Release, oldreleases []Release, owner string, repo string, tekton bool, slack bool) {
+// returns false if theres a new release
+func check_releases(loaded_release_map *map[string]bool, new_releases []Release, owner string, repo string, tekton bool, slack bool, prerelease bool) bool {
 	release_type := "release"
-	channel := releases_channel
-	if newreleases[0].Prerelease {
+	if prerelease {
 		release_type = "prerelease"
-		channel = prereleases_channel
 	}
-
-	// Create a map of tagnames in old releases
-	oldrelease_map := make(map[string]bool)
-	for _, release := range oldreleases {
-		oldrelease_map[release.TagName] = true
-	}
-
-	// Check if any elements in newreleases aren't in oldreleases
 	no_new_releases := true
-	for _, release := range newreleases {
-		if !oldrelease_map[release.TagName] {
-			log.Printf("Found a new %s for %s/%s (%s)\n", release_type, owner, repo, release.Name)
-			no_new_releases = false
+	for _, release := range new_releases {
+		if !(*loaded_release_map)[release.TagName] {
+			log.Printf("Found a new %s for %s/%s (%s)", release_type, owner, repo, release.TagName)
+			(*loaded_release_map)[release.TagName] = true
 			if slack {
-				slacknotif(release, owner, repo, channel)
+				err := slacknotif(release, owner, repo)
+				if err != nil {
+					log.Printf("Error sending slack notification for %s %s/%s %s", release_type, owner, repo, release.TagName)
+				}
 			}
 			if tekton {
-				triggertekton(release, owner, repo)
+				err := triggertekton(release, owner, repo)
+				if err != nil {
+					log.Printf("Error sending tekton payload for %s %s/%s %s", release_type, owner, repo, release.TagName)
+				}
 			}
-		} else {
-			// fmt.Printf("%s %s is already in memory\n", release_type, release.Name)
+			no_new_releases = false
 		}
 	}
-
-	if no_new_releases {
-		log.Printf("No new %ss for %s/%s\n", release_type, owner, repo)
-	}
-
+	return no_new_releases
 }
 
 // fetches only the latest release from the repo (different endpoint than all releases)

@@ -15,7 +15,7 @@ var token = os.Getenv("slack_token")
 var releases_channel = os.Getenv("releases_channel")
 var prereleases_channel = os.Getenv("prereleases_channel")
 
-func slacknotif(release Release, owner string, repo string, channel string) error {
+func slacknotif(release Release, owner string, repo string) error {
 
 	if token == "" {
 		log.Fatal("Missing slack token")
@@ -27,8 +27,10 @@ func slacknotif(release Release, owner string, repo string, channel string) erro
 	}
 
 	release_type := "Release"
+	channel := releases_channel
 	if release.Prerelease {
 		release_type = "Prerelease"
+		channel = prereleases_channel
 	}
 
 	var jsonData = []byte(`{
