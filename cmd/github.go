@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const github_api_url string = "https://api.github.com"
+var github_api_url string = "https://api.github.com"
 
 type Release struct {
 	Name        string `json:"name"`
@@ -19,11 +19,13 @@ type Release struct {
 	Prerelease  bool   `json:"prerelease"`
 	HtmlUrl     string `json:"html_url"`
 	PublishedAt string `json:"published_at"`
-	Author      struct {
-		Login     string `json:"login"`
-		AvatarUrl string `json:"avatar_url"`
-		HtmlUrl   string `json:"html_url"`
-	} `json:"author"`
+	Author      Author `json:"author"`
+}
+
+type Author struct {
+	Login     string `json:"login"`
+	AvatarUrl string `json:"avatar_url"`
+	HtmlUrl   string `json:"html_url"`
 }
 
 func sort_by_published_date(releases []Release) []Release {
