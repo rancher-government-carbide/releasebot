@@ -8,6 +8,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -157,12 +158,25 @@ func monitor_repo(owner string, repo string, prereleases bool, tekton bool, slac
 	}
 
 	for {
+
+		var loaded_releases_msg = make([]string, 0, len(loaded_releases_map))
+		for release := range loaded_releases_map {
+			loaded_releases_msg = append(loaded_releases_msg, release)
+		}
+		log.Printf("Releases in the hashmap for %s/%s: %s\n", owner, repo, strings.Join(loaded_releases_msg, ", "))
+
+		var loaded_prereleases_msg = make([]string, 0, len(loaded_prereleases_map))
+		for release := range loaded_prereleases_map {
+			loaded_prereleases_msg = append(loaded_prereleases_msg, release)
+		}
+		log.Printf("Prereleases in the hashmap for %s/%s: %s\n", owner, repo, strings.Join(loaded_prereleases_msg, ", "))
+
 		new_releases, err = get_latest_releases(owner, repo, false)
 		if err != nil {
 			log.Printf("Failed to get latest releases for: %s/%s - %v", owner, repo, err)
 		}
 		if len(new_releases) > 4 {
-			new_releases = new_releases[:4]
+			new_releases = new_releases[:5]
 		}
 		if check_releases(&loaded_releases_map, new_releases, owner, repo, tekton, slack, false) {
 			log.Printf("No new releases for %s/%s\n", owner, repo)
@@ -173,7 +187,7 @@ func monitor_repo(owner string, repo string, prereleases bool, tekton bool, slac
 				log.Printf("Failed to get latest prereleases for: %s/%s - %v", owner, repo, err)
 			}
 			if len(new_prereleases) > 4 {
-				new_prereleases = new_prereleases[:4]
+				new_prereleases = new_prereleases[:5]
 			}
 			if check_releases(&loaded_prereleases_map, new_prereleases, owner, repo, tekton, slack, true) {
 				log.Printf("No new prereleases for %s/%s\n", owner, repo)
