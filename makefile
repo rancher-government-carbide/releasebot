@@ -21,7 +21,7 @@ test: releasebot
 	go test $(TEST_FLAGS) $(SRC)
 
 # Build the container image
-container:
+container: clean
 	$(CONTAINER_CLI) build -t $(CONTAINERTAG):$(VERSION) . && $(CONTAINER_CLI) image tag $(CONTAINERTAG):$(VERSION) $(CONTAINERTAG):latest
 	
 # Push the binary
