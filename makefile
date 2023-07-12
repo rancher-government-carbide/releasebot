@@ -1,4 +1,4 @@
-.PHONY: dependencies test container container-push linux darwin windows env run clean help 
+.PHONY: dependencies test container container-push linux darwin windows clean help 
 
 BINARY_NAME=releasebot
 CONTAINERTAG=clanktron/releasebot
@@ -6,10 +6,11 @@ SRC=$(shell git ls-files ./cmd)
 VERSION=0.1.0
 GOENV=GOARCH=amd64 CGO_ENABLED=0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
+TEST_FLAGS=-v -cover -count 2
 CONTAINER_CLI=nerdctl
 
 # Build the binary
-releasebot: clean
+$(BINARY_NAME):
 	$(GOENV) go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC)
 
 dependencies:
@@ -17,7 +18,7 @@ dependencies:
 
 # Test the binary
 test: releasebot
-	go test $(SRC)
+	go test $(TEST_FLAGS) $(SRC)
 
 # Build the container image
 container:
@@ -36,9 +37,6 @@ darwin:
 # Build the binary for Windows
 windows:
 	GOOS=windows $(GOENV) go build $(BUILD_FLAGS) -o $(BINARY_NAME)-windows $(SRC)
-
-env:
-	set -a; source .env; set +a
 
 # Clean the binary
 clean:
