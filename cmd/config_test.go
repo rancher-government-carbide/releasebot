@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-const configfile string = "../config_test.json"
+const configfile string = "../config.json"
 
 func Test_loadConfig(t *testing.T) {
 
