@@ -1,4 +1,4 @@
-.PHONY: dependencies test lint container container-push linux darwin windows clean help 
+.PHONY: check test lint container container-push linux darwin windows dependencies clean help 
 
 BINARY_NAME=releasebot
 CONTAINER_NAME=clanktron/releasebot
@@ -7,15 +7,14 @@ VERSION=0.1.0
 COMMIT_HASH=$(shell git rev-parse HEAD)
 GOENV=GOARCH=amd64 CGO_ENABLED=0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
-TEST_FLAGS=-v -cover -count 2
+TEST_FLAGS=-v -cover -count 1
 CONTAINER_CLI=nerdctl
 
 # Build the binary
 $(BINARY_NAME):
 	$(GOENV) go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC)
 
-dependencies:
-	go mod tidy && go get -v -d ./...
+check: test lint
 
 # Test the binary
 test: $(BINARY_NAME)
@@ -44,6 +43,9 @@ darwin:
 windows:
 	GOOS=windows $(GOENV) go build $(BUILD_FLAGS) -o $(BINARY_NAME)-windows $(SRC)
 
+dependencies:
+	go mod tidy && go get -v -d ./...
+
 # Clean the binary
 clean:
 	rm -f $(BINARY_NAME)
@@ -54,6 +56,7 @@ help:
 	@printf "  $(BINARY_NAME) 		Build the binary (default)\n"
 	@printf "  test 			Build and test the binary\n"
 	@printf "  lint 			Build and lint the binary\n"
+	@printf "  check 			Build, test, and lint the binary\n"
 	@printf "  linux 		Build the binary for Linux\n"
 	@printf "  darwin 		Build the binary for MacOS\n"
 	@printf "  windows 		Build the binary for Windows\n"
