@@ -8,14 +8,17 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 )
 
 var test_release_1 = Release{
-	Name:        "v2.3.4",
-	TagName:     "v2.3.4",
-	Prerelease:  false,
-	HtmlUrl:     "https://example.com/releases/v2.3.4",
-	PublishedAt: "2023-01-10T12:34:56Z",
+	Name:       "v2.3.4",
+	TagName:    "v2.3.4",
+	Prerelease: false,
+	HtmlUrl:    "https://example.com/releases/v2.3.4",
+	PublishedAt: Time{
+		Time: time.Date(2023, 7, 16, 12, 0, 0, 0, time.UTC),
+	},
 	Author: Author{
 		Login:     "john_doe",
 		AvatarUrl: "https://example.com/avatar.jpg",
@@ -24,11 +27,13 @@ var test_release_1 = Release{
 }
 
 var test_release_2 = Release{
-	Name:        "v2.3.4",
-	TagName:     "v2.3.4",
-	Prerelease:  true,
-	HtmlUrl:     "https://example.com/releases/v2.3.4-beta",
-	PublishedAt: "2023-05-21T08:15:30Z",
+	Name:       "v2.3.4",
+	TagName:    "v2.3.4",
+	Prerelease: true,
+	HtmlUrl:    "https://example.com/releases/v2.3.4-beta",
+	PublishedAt: Time{
+		Time: time.Date(2023, 4, 1, 9, 0, 0, 0, time.UTC),
+	},
 	Author: Author{
 		Login:     "jane_smith",
 		AvatarUrl: "https://example.com/avatar.jpg",
@@ -37,11 +42,13 @@ var test_release_2 = Release{
 }
 
 var test_release_3 = Release{
-	Name:        "v2.3.4",
-	TagName:     "v2.3.4",
-	Prerelease:  false,
-	HtmlUrl:     "https://example.com/releases/v2.3.4",
-	PublishedAt: "2024-03-12T10:20:30Z",
+	Name:       "v2.3.4",
+	TagName:    "v2.3.4",
+	Prerelease: false,
+	HtmlUrl:    "https://example.com/releases/v2.3.4",
+	PublishedAt: Time{
+		Time: time.Date(2022, 11, 20, 18, 30, 0, 0, time.UTC),
+	},
 	Author: Author{
 		Login:     "alice_walker",
 		AvatarUrl: "https://example.com/avatar.jpg",
@@ -50,11 +57,13 @@ var test_release_3 = Release{
 }
 
 var test_release_4 = Release{
-	Name:        "v2.3.4",
-	TagName:     "v2.3.4",
-	Prerelease:  true,
-	HtmlUrl:     "https://example.com/releases/v2.3.4-beta",
-	PublishedAt: "2024-08-28T15:45:00Z",
+	Name:       "v2.3.4",
+	TagName:    "v2.3.4",
+	Prerelease: true,
+	HtmlUrl:    "https://example.com/releases/v2.3.4-beta",
+	PublishedAt: Time{
+		Time: time.Date(2021, 12, 5, 7, 15, 0, 0, time.UTC),
+	},
 	Author: Author{
 		Login:     "bob_jackson",
 		AvatarUrl: "https://example.com/avatar.jpg",
@@ -63,11 +72,13 @@ var test_release_4 = Release{
 }
 
 var test_release_5 = Release{
-	Name:        "v2.3.4",
-	TagName:     "v2.3.4",
-	Prerelease:  false,
-	HtmlUrl:     "https://example.com/releases/v2.3.4",
-	PublishedAt: "2025-06-17T09:00:15Z",
+	Name:       "v2.3.4",
+	TagName:    "v2.3.4",
+	Prerelease: false,
+	HtmlUrl:    "https://example.com/releases/v2.3.4",
+	PublishedAt: Time{
+		Time: time.Date(2021, 6, 1, 12, 0, 0, 0, time.UTC),
+	},
 	Author: Author{
 		Login:     "samuel_rodriguez",
 		AvatarUrl: "https://example.com/avatar.jpg",
@@ -86,12 +97,12 @@ var test_releases = []Release{
 const test_release_count int = 5
 
 func TestSortByPublishedDate(t *testing.T) {
-	expectedOrder := []string{
-		"2025-06-17T09:00:15Z",
-		"2024-08-28T15:45:00Z",
-		"2024-03-12T10:20:30Z",
-		"2023-05-21T08:15:30Z",
-		"2023-01-10T12:34:56Z",
+	expectedOrder := []Time{
+		{Time: time.Date(2023, 7, 16, 12, 0, 0, 0, time.UTC)},
+		{Time: time.Date(2023, 4, 1, 9, 0, 0, 0, time.UTC)},
+		{Time: time.Date(2022, 11, 20, 18, 30, 0, 0, time.UTC)},
+		{Time: time.Date(2021, 12, 5, 7, 15, 0, 0, time.UTC)},
+		{Time: time.Date(2021, 6, 1, 12, 0, 0, 0, time.UTC)},
 	}
 
 	sortedReleases := sort_by_published_date(test_releases)

@@ -21,11 +21,7 @@ func slacknotif(release Release, owner string, repo string) error {
 		log.Fatal("Missing slack token")
 	}
 
-	publishedDate, err := time.Parse(time.RFC3339, release.PublishedAt)
-	if err != nil {
-		log.Print(err)
-	}
-
+	publishedDate := release.PublishedAt.Time
 	release_type := "Release"
 	channel := releases_channel
 	if release.Prerelease {
