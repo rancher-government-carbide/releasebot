@@ -1,0 +1,28 @@
+[
+    {
+        "owner": "clanktron",
+        "repo": "dummy",
+        "slack": true,
+        "prereleases": true,
+        "payloads": [ "standard", "test" ]
+    },
+    {
+        "owner": "rancher",
+        "repo": "rancher",
+        "slack": true,
+        "prereleases": true,
+        "payloads": [ "standard", "test" ]
+    },
+    {
+        "owner": "k3s-io",
+        "repo": "k3s",
+        "slack": true,
+        "prereleases": true,
+        "payloads": [ "standard" ]
+    },
+    {
+        "owner": "kubernetes",
+        "repo": "kubernetes",
+        "slack": true
+    }
+]
