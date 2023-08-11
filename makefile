@@ -2,7 +2,7 @@
 
 BINARY_NAME=releasebot
 CONTAINER_NAME=clanktron/releasebot
-SRC=$(shell git ls-files ./cmd)
+SRC=./...
 VERSION=0.1.0
 COMMIT_HASH=$(shell git rev-parse HEAD)
 GOENV=GOARCH=amd64 CGO_ENABLED=0
