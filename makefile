@@ -17,11 +17,11 @@ $(BINARY_NAME):
 check: test lint
 
 # Test the binary
-test: $(BINARY_NAME)
+test:
 	go test $(TEST_FLAGS) $(SRC) 
 
 # Run linters
-lint: $(BINARY_NAME)
+lint:
 	go vet $(SRC)
 	staticcheck $(SRC)
 
@@ -54,8 +54,8 @@ clean:
 help:
 	@printf "Available targets:\n"
 	@printf "  $(BINARY_NAME) 		Build the binary (default)\n"
-	@printf "  test 			Build and test the binary\n"
-	@printf "  lint 			Build and lint the binary\n"
+	@printf "  test 			Run all unit tests\n"
+	@printf "  lint 			Run go vet and staticcheck\n"
 	@printf "  check 			Build, test, and lint the binary\n"
 	@printf "  linux 		Build the binary for Linux\n"
 	@printf "  darwin 		Build the binary for MacOS\n"

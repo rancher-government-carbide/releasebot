@@ -16,7 +16,6 @@ if make lint; then
 else
     echo "Failed to pass linter, aborting commit..." && exit 1
 fi
-make clean
 
 # if git rev-parse --verify HEAD >/dev/null 2>&1
 # then
