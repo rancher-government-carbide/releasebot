@@ -56,7 +56,7 @@ help:
 	@printf "  $(BINARY_NAME) 		Build the binary (default)\n"
 	@printf "  test 			Run all unit tests\n"
 	@printf "  lint 			Run go vet and staticcheck\n"
-	@printf "  check 			Build, test, and lint the binary\n"
+	@printf "  check 		Build, test, and lint the binary\n"
 	@printf "  linux 		Build the binary for Linux\n"
 	@printf "  darwin 		Build the binary for MacOS\n"
 	@printf "  windows 		Build the binary for Windows\n"
