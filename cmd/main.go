@@ -2,25 +2,20 @@ package main
 
 import (
 	"log"
-	"time"
 )
 
 func main() {
 
-	var config []Repository
-	if err := loadConfig(&config); err != nil {
-		log.Fatal("Error loading config file...\nExiting...\n")
+	var repos []RepositoryEntry
+	if err := loadRepos(&repos); err != nil {
+		log.Fatalf("Error loading repos file: %v", err)
 	}
 
-	for i := 0; i < len(config); i++ {
-		if config[i].Prereleases {
-			go monitor_repo(config[i].Owner, config[i].Repo, config[i].Prereleases, config[i].Tekton, config[i].Slack)
-		}
-		go monitor_repo(config[i].Owner, config[i].Repo, false, config[i].Tekton, config[i].Slack)
+	var payloads []PayloadEntry
+	if err := loadPayloads(&payloads); err != nil {
+		log.Fatalf("Error loading payloads file: %v", err)
 	}
 
-	for {
-		time.Sleep(time.Minute)
-	}
+	initMonitor(repos, payloads)
 
 }

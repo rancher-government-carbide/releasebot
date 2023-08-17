@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"os"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -44,18 +42,53 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 }
 
 // sorts releases by publish date (newest to oldest)
-func sort_by_published_date(releases []Release) []Release {
+func sortByPublishDate(releases []Release) []Release {
 	sort.Slice(releases, func(i, j int) bool {
 		return releases[i].PublishedAt.After(releases[j].PublishedAt.Time)
 	})
 	return releases
 }
 
-// fetches all releases/prereleases for a repo (default gh api max is 30 results)
-func get_releases(owner string, repo string) ([]Release, error) {
+// fetches only the single latest release from the repo (different endpoint than all releases)
+//
+//lint:ignore U1000 Ignore this unused function
+func getLatestRelease(owner string, repo string) (Release, error) {
 
+	var latestRelease Release
+
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		log.Print("No provided github token - requests to the github api will be unathenticated (60 requests/hr rate limit)\n")
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/%s/releases/latest", github_api_url, owner, repo), nil)
+	if err != nil {
+		log.Print(err)
+		return latestRelease, err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Print(err)
+		log.Printf("Failed to get releases for: %s/%s", owner, repo)
+		return latestRelease, err
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(&latestRelease)
+	if err != nil {
+		log.Print(err)
+		log.Printf("Failed to decode releases for: %s/%s", owner, repo)
+		return latestRelease, err
+	}
+	return latestRelease, nil
+}
+
+// fetches all releases/prereleases for a repo (default gh api pagination is 30 results)
+func getAllReleases(owner string, repo string) ([]Release, error) {
 	var releases []Release
-	token := os.Getenv("github_token")
+	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		log.Print("No provided github token - requests to the github api will be unathenticated (60 requests/hr rate limit)\n")
 	}
@@ -75,162 +108,52 @@ func get_releases(owner string, repo string) ([]Release, error) {
 	if err != nil {
 		return releases, fmt.Errorf("failed to decode releases for %s/%s - %w", owner, repo, err)
 	}
-	// log.Printf(" releases for: %s/%s - %v", owner, repo, releases)
-
 	return releases, nil
 }
 
 // filters all prereleases out of the array (leaves only releases)
-func filter_prereleases(releases []Release) []Release {
-	var filteredreleases []Release
+func filterPrereleases(releases []Release) []Release {
+	var onlyRegularReleases []Release
 	for _, release := range releases {
 		if !release.Prerelease {
-			filteredreleases = append(filteredreleases, release)
+			onlyRegularReleases = append(onlyRegularReleases, release)
 		}
 	}
-	return filteredreleases
+	return onlyRegularReleases
 }
 
 // filters all releases out of the array (leaves only prereleases)
-func filter_releases(releases []Release) []Release {
-	var filteredreleases []Release
+func filterReleases(releases []Release) []Release {
+	var onlyPrereleases []Release
 	for _, release := range releases {
 		if release.Prerelease {
-			filteredreleases = append(filteredreleases, release)
+			onlyPrereleases = append(onlyPrereleases, release)
 		}
 	}
-	return filteredreleases
+	return onlyPrereleases
 }
 
 // fetches all releases from repo (sorted by publish date)
-func get_latest_releases(owner string, repo string, prerelease bool) ([]Release, error) {
-
-	var latest_releases []Release
-	latest_releases, err := get_releases(owner, repo)
+//
+// count specifies the maximum number of releases to return, if its less than 0 there is no max
+func getLatestReleases(owner string, repo string, prerelease bool, count int) ([]Release, error) {
+	var latestReleases []Release
+	latestReleases, err := getAllReleases(owner, repo)
 	if err != nil {
-		return latest_releases, err
+		return latestReleases, err
 	}
 	if prerelease {
-		latest_releases = filter_releases(latest_releases)
+		latestReleases = filterReleases(latestReleases)
 	} else {
-		latest_releases = filter_prereleases(latest_releases)
+		latestReleases = filterPrereleases(latestReleases)
 	}
 	// github api is generally already sorted by date already but they don't officially guarantee such
-	latest_releases = sort_by_published_date(latest_releases)
-	// only the latest 5 are relevant
-	// if len(latest_releases) > 5 {
-	// 	latest_releases = latest_releases[:5]
-	// }
-	return latest_releases, nil
+	latestReleases = sortByPublishDate(latestReleases)
+	if count < 0 {
+		return latestReleases, nil
+	}
+	if len(latestReleases) > (count - 1) {
+		latestReleases = latestReleases[:count]
+	}
+	return latestReleases, nil
 }
-
-func monitor_repo(owner string, repo string, prereleases bool, tekton bool, slack bool) {
-
-	release_type := "release"
-	if prereleases {
-		release_type = "prerelease"
-	}
-
-	interval, err := strconv.ParseInt(os.Getenv("interval"), 10, 64)
-	if err != nil {
-		log.Printf("Interval environment variable not set or invalid value - defaulting to 5 minutes")
-		interval = 5
-	}
-
-	var new_releases []Release
-	var newest_release_published time.Time
-	loaded_releases_map := make(map[string]bool)
-
-	base_releases, err := get_latest_releases(owner, repo, prereleases)
-	if err != nil {
-		log.Printf("Failed to get latest %ss for: %s/%s - %v", release_type, owner, repo, err)
-	}
-
-	for _, release := range base_releases {
-		if release.PublishedAt.After(newest_release_published) {
-			newest_release_published = release.PublishedAt.Time
-		}
-		if !loaded_releases_map[release.TagName] {
-			loaded_releases_map[release.TagName] = true
-		}
-	}
-
-	for {
-		// temporary debugging: print the releases in the map
-		var loaded_releases_msg = make([]string, 0, len(loaded_releases_map))
-		for release := range loaded_releases_map {
-			loaded_releases_msg = append(loaded_releases_msg, release)
-		}
-		log.Printf("%ss in the hashmap for %s/%s: %s\n", release_type, owner, repo, strings.Join(loaded_releases_msg, ", "))
-
-		new_releases, err = get_latest_releases(owner, repo, prereleases)
-		if err != nil {
-			log.Printf("Failed to get latest %ss for: %s/%s - %v", release_type, owner, repo, err)
-		}
-		if len(new_releases) > 4 {
-			new_releases = new_releases[:5]
-		}
-
-		no_new_releases := true
-		for _, release := range new_releases {
-			if !loaded_releases_map[release.TagName] && release.PublishedAt.After(newest_release_published) {
-				log.Printf("Found a new %s for %s/%s (%s)", release_type, owner, repo, release.TagName)
-				loaded_releases_map[release.TagName] = true
-				newest_release_published = release.PublishedAt.Time
-				if slack {
-					err := slacknotif(release, owner, repo)
-					if err != nil {
-						log.Printf("Error sending slack notification for %s %s/%s (%s) %v", release_type, owner, repo, release.TagName, err)
-					}
-				}
-				if tekton {
-					err := triggertekton(release, owner, repo)
-					if err != nil {
-						log.Printf("Error sending tekton payload for %s %s/%s (%s) %v", release_type, owner, repo, release.TagName, err)
-					}
-				}
-				no_new_releases = false
-			}
-		}
-		if no_new_releases {
-			log.Printf("No new %ss for %s/%s\n", release_type, owner, repo)
-		}
-
-		time.Sleep(time.Duration(interval) * time.Minute)
-	}
-}
-
-// // fetches only the latest release from the repo (different endpoint than all releases)
-// func get_latest_release(owner string, repo string) (Release, error) {
-//
-// 	var latestrelease Release
-//
-// 	token := os.Getenv("github_token")
-// 	if token == "" {
-// 		log.Print("No provided github token - requests to the github api will be unathenticated (60 requests/hr rate limit)\n")
-// 	}
-//
-// 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/%s/releases/latest", github_api_url, owner, repo), nil)
-// 	if err != nil {
-// 		log.Print(err)
-// 		return latestrelease, err
-// 	}
-// 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
-// 	client := &http.Client{}
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		log.Print(err)
-// 		log.Printf("Failed to get releases for: %s/%s", owner, repo)
-// 		return latestrelease, err
-// 	}
-// 	defer resp.Body.Close()
-//
-// 	err = json.NewDecoder(resp.Body).Decode(&latestrelease)
-// 	if err != nil {
-// 		log.Print(err)
-// 		log.Printf("Failed to decode releases for: %s/%s", owner, repo)
-// 		return latestrelease, err
-// 	}
-//
-// 	return latestrelease, nil
-// }

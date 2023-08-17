@@ -105,7 +105,7 @@ func TestSortByPublishedDate(t *testing.T) {
 		{Time: time.Date(2021, 6, 1, 12, 0, 0, 0, time.UTC)},
 	}
 
-	sortedReleases := sort_by_published_date(test_releases)
+	sortedReleases := sortByPublishDate(test_releases)
 
 	for i, release := range sortedReleases {
 		if release.PublishedAt != expectedOrder[i] {
@@ -139,8 +139,8 @@ func TestGetReleases(t *testing.T) {
 	defer ts.Close()
 
 	github_api_url = ts.URL
-	os.Setenv("github_token", "test_token")
-	releases, err := get_releases("owner", "repo")
+	os.Setenv("GITHUB_TOKEN", "test_token")
+	releases, err := getAllReleases("owner", "repo")
 	if err != nil {
 		t.Errorf("Failed to get releases: %s", err)
 	}
@@ -154,8 +154,7 @@ func TestGetReleases(t *testing.T) {
 }
 
 func TestFilterPrereleases(t *testing.T) {
-	filteredReleases := filter_prereleases(test_releases)
-
+	filteredReleases := filterPrereleases(test_releases)
 	for _, release := range filteredReleases {
 		if release.Prerelease {
 			t.Errorf("FilterPrereleases failed - found prerelease in filtered releases: %s", release.TagName)
@@ -164,8 +163,7 @@ func TestFilterPrereleases(t *testing.T) {
 }
 
 func TestFilterReleases(t *testing.T) {
-	filteredReleases := filter_releases(test_releases)
-
+	filteredReleases := filterReleases(test_releases)
 	for _, release := range filteredReleases {
 		if !release.Prerelease {
 			t.Errorf("FilterReleases failed - found release in filtered releases: %s", release.TagName)
