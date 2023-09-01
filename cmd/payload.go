@@ -73,9 +73,9 @@ func sendPayload(jsonPayload []byte, url string) error {
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Printf("Failed to deliver payload (%s) to url (%s)", body, url)
 		return err
 	}
-	log.Printf("%s", body)
 
 	return nil
 }

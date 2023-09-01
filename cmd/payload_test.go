@@ -79,7 +79,7 @@ func TestReplaceVariables(t *testing.T) {
 	}
 }
 
-func Test_parsePayload(t *testing.T) {
+func TestParsePayload(t *testing.T) {
 
 	correctCompiledPayload := json.RawMessage(`
 				{
