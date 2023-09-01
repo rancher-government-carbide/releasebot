@@ -37,6 +37,7 @@ func (p *PayloadMap) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// sources env var RELEASEBOT_REPOS for all RepositoryEntries
 func loadRepos(config *[]RepositoryEntry) error {
 
 	configpath := os.Getenv("RELEASEBOT_REPOS")
@@ -59,6 +60,7 @@ func loadRepos(config *[]RepositoryEntry) error {
 	return nil
 }
 
+// sources env var RELEASEBOT_PAYLOADS for all PayloadEntries
 func loadPayloads(config *[]PayloadEntry) error {
 
 	configpath := os.Getenv("RELEASEBOT_PAYLOADS")
