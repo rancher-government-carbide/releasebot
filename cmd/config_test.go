@@ -14,8 +14,8 @@ type testMetrics struct {
 	failedTestcases int
 }
 
-const repoFile string = "../repos.json"
-const payloadFile string = "../payloads.json"
+const repoFile string = "testdata/repos.json"
+const payloadFile string = "testdata/payloads.json"
 
 func processResult(t *testing.T, entryField string, passed bool, metrics *testMetrics) {
 	if passed {
