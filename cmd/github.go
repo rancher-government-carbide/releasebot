@@ -35,7 +35,10 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	const layout = time.RFC3339
 	parsedTime, err := time.Parse(layout, string(data[1:len(data)-1]))
 	if err != nil {
-		return err
+		t.Time = time.Time{}
+		log.Printf("Failed to decode into type time.Time")
+		// temporary removal of error? future changes to project should render published_at timestamp irrelevant
+		// return err
 	}
 	t.Time = parsedTime
 	return nil

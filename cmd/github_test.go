@@ -96,6 +96,77 @@ var test_releases = []Release{
 
 const test_release_count int = 5
 
+func TestUnmarshalReleaseJSON(t *testing.T) {
+	var testReleaseJSONs = []string{
+		`
+		{
+			"name":"v2.3.4",
+			"tag_name":"v2.3.4",
+			"prerelease":false,
+			"html_url":"https://example.com/releases/v2.3.4",
+			"published_at":"2023-07-16T12:00:00Z",
+			"author":{
+				"login":"john_doe",
+				"avatar_url":"https://example.com/avatar.jpg",
+				"html_url":"https://example.com/users/john_doe"
+			}
+		}
+		`,
+		`
+		{
+			"name":"v2.4.0",
+			"tag_name":"v2.4.0",
+			"prerelease":true,
+			"html_url":"https://example.com/releases/v2.4.0",
+			"published_at":"2023-08-15T10:30:00Z",
+			"author":{
+				"login":"jane_smith",
+				"avatar_url":"https://example.com/jane.jpg",
+				"html_url":"https://example.com/users/jane_smith"
+			}
+		}
+		`,
+		`
+		{
+			"name":"v2.4.0",
+			"tag_name":"v2.4.0",
+			"prerelease":true,
+			"html_url":"https://example.com/releases/v2.4.0",
+			"published_at":"null",
+			"author":{
+				"login":"jane_smith",
+				"avatar_url":"https://example.com/jane.jpg",
+				"html_url":"https://example.com/users/jane_smith"
+			}
+		}
+		`,
+		`
+		{
+			"name":"v2.5.0",
+			"tag_name":"v9.4.0",
+			"prerelease":true,
+			"html_url":"https://example.com/releases/v2.4.0",
+			"published_at":"ul",
+			"author":{
+				"login":"bjarne",
+				"avatar_url":"https://example.com/jane.jpg",
+				"html_url":"https://example.com/users/brandon_gooooooolla"
+			}
+		}
+		`,
+	}
+
+	for _, jsonStr := range testReleaseJSONs {
+		var release Release
+
+		err := json.Unmarshal([]byte(jsonStr), &release)
+		if err != nil {
+			t.Errorf("Error unmarshaling JSON: %v", err)
+		}
+	}
+
+}
+
 func TestSortByPublishedDate(t *testing.T) {
 	expectedOrder := []Time{
 		{Time: time.Date(2023, 7, 16, 12, 0, 0, 0, time.UTC)},
