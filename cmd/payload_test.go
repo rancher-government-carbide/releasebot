@@ -1,14 +1,14 @@
 package main
 
 import (
-	"encoding/json"
-	"reflect"
 	"bytes"
-	"testing"
-	"time"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"testing"
+	"time"
 )
 
 func TestReplaceVariables(t *testing.T) {
@@ -81,13 +81,6 @@ func TestReplaceVariables(t *testing.T) {
 
 func TestParsePayload(t *testing.T) {
 
-	correctCompiledPayload := json.RawMessage(`
-				{
-					"Product": "example_repo",
-            		"Release": "v2.3.4"
-				}
-			`)
-
 	testRepoEntry := RepositoryEntry{
 		Owner: "example_owner",
 		Repo:  "example_repo",
@@ -99,7 +92,14 @@ func TestParsePayload(t *testing.T) {
 		Payload: json.RawMessage(`
 				{
 					"Product": "$REPO",
-            		"Release": "$RELEASE.TAGNAME"
+            		"RepoUrl": "$REPO.URL",
+            		"Tagname": "$RELEASE.TAGNAME",
+            		"Prerelease": "$RELEASE.PRERELEASE",
+            		"HtmlUrl": "$RELEASE.HTMLURL",
+            		"PublishedAt": "$RELEASE.PUBLISHEDAT",
+            		"Author.Login": "$AUTHOR.LOGIN",
+            		"Author.AvatarUrl": "$AUTHOR.AVATARURL",
+            		"Author.HtmlUrl": "$AUTHOR.HTMLURL"
 				}
 			`),
 	}
@@ -119,6 +119,20 @@ func TestParsePayload(t *testing.T) {
 		},
 	}
 
+	correctCompiledPayload := json.RawMessage(`
+				{
+					"Product": "example_repo",
+					"RepoUrl": "git@github.com:example_owner/example_repo",
+            		"Tagname": "v2.3.4",
+            		"Prerelease": "false",
+            		"HtmlUrl": "https://example.com/releases/v2.3.4",
+            		"PublishedAt": "2023-07-16 12:00:00 +0000 UTC",
+            		"Author.Login": "john_doe",
+            		"Author.AvatarUrl": "https://example.com/avatar.jpg",
+            		"Author.HtmlUrl": "https://example.com/users/john_doe"
+				}
+			`)
+
 	testCompiledJSONPayload, err := parsePayload(testRelease, testRepoEntry, testPayloadEntry)
 	if err != nil {
 		t.Fatalf("Failed to parse payloads: %v", err)
@@ -137,35 +151,35 @@ func TestParsePayload(t *testing.T) {
 }
 
 func TestSendPayload(t *testing.T) {
-    // Create a test server to mock the HTTP request/response
-    server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // Check if the request method is POST
-        if r.Method != http.MethodPost {
-            t.Errorf("Expected POST request, got %s", r.Method)
-        }
+	// Create a test server to mock the HTTP request/response
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check if the request method is POST
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected POST request, got %s", r.Method)
+		}
 
-        // Read the request body
-        body, err := io.ReadAll(r.Body)
-        if err != nil {
-            t.Fatalf("Error reading request body: %v", err)
-        }
+		// Read the request body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("Error reading request body: %v", err)
+		}
 
-        // Check the request body
-        expectedPayload := []byte(`{"key": "value"}`)
-        if !bytes.Equal(body, expectedPayload) {
-            t.Errorf("Expected request body %s, got %s", expectedPayload, body)
-        }
+		// Check the request body
+		expectedPayload := []byte(`{"key": "value"}`)
+		if !bytes.Equal(body, expectedPayload) {
+			t.Errorf("Expected request body %s, got %s", expectedPayload, body)
+		}
 
-        // Send a mock response
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(http.StatusOK)
-        w.Write([]byte(`{"status": "success"}`))
-    }))
-    defer server.Close()
+		// Send a mock response
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status": "success"}`))
+	}))
+	defer server.Close()
 
-    // Call the sendPayload function with the test server URL
-    err := sendPayload([]byte(`{"key": "value"}`), server.URL)
-    if err != nil {
-        t.Fatalf("sendPayload failed: %v", err)
-    }
+	// Call the sendPayload function with the test server URL
+	err := sendPayload([]byte(`{"key": "value"}`), server.URL)
+	if err != nil {
+		t.Fatalf("sendPayload failed: %v", err)
+	}
 }

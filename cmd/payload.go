@@ -34,14 +34,15 @@ func parsePayload(release Release, repo RepositoryEntry, payload PayloadEntry) (
 	var repo_url string = fmt.Sprintf("git@github.com:%s/%s", repo.Owner, repo.Repo)
 
 	variables := map[string]string{
-		"REPO":               repo.Repo,
-		"REPO.URL":           repo_url,
-		"RELEASE.TAGNAME":    release.TagName,
-		"RELEASE.PRERELEASE": strconv.FormatBool(release.Prerelease),
-		"RELEASE.HTMLURL":    release.HtmlUrl,
-		"AUTHOR.LOGIN":       release.Author.Login,
-		"AUTHOR.AVATARURL":   release.Author.AvatarUrl,
-		"AUTHOR.HTMLURL":     release.Author.HtmlUrl,
+		"REPO":                repo.Repo,
+		"REPO.URL":            repo_url,
+		"RELEASE.TAGNAME":     release.TagName,
+		"RELEASE.PRERELEASE":  strconv.FormatBool(release.Prerelease),
+		"RELEASE.HTMLURL":     release.HtmlUrl,
+		"RELEASE.PUBLISHEDAT": release.PublishedAt.String(),
+		"AUTHOR.LOGIN":        release.Author.Login,
+		"AUTHOR.AVATARURL":    release.Author.AvatarUrl,
+		"AUTHOR.HTMLURL":      release.Author.HtmlUrl,
 	}
 
 	var data map[string]interface{}
