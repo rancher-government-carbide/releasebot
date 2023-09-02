@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 )
@@ -79,6 +80,21 @@ func TestReplaceVariables(t *testing.T) {
 	}
 }
 
+func sortMap(m map[string]interface{}) {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		v := m[k]
+		if subMap, ok := v.(map[string]interface{}); ok {
+			sortMap(subMap)
+		}
+	}
+}
+
 func TestParsePayload(t *testing.T) {
 
 	testRepoEntry := RepositoryEntry{
@@ -137,15 +153,41 @@ func TestParsePayload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to parse payloads: %v", err)
 	}
-	correctCompiledJSONPayload, err := json.Marshal(correctCompiledPayload)
+
+	// Unmarshal the testCompiledJSONPayload
+	var testPayload map[string]interface{}
+	err = json.Unmarshal(testCompiledJSONPayload, &testPayload)
 	if err != nil {
-		t.Fatalf("Failed to marshall correctCompiledPayload: %v\n Test invalid", err)
+		t.Fatalf("Failed to unmarshal testCompiledJSONPayload: %v", err)
 	}
 
-	if !reflect.DeepEqual(testCompiledJSONPayload, correctCompiledJSONPayload) {
+	// Unmarshal the correctCompiledJSONPayload
+	var correctPayload map[string]interface{}
+	err = json.Unmarshal(correctCompiledPayload, &correctPayload)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal correctCompiledJSONPayload: %v", err)
+	}
+
+	// Sort the elements within the maps
+	sortMap(testPayload)
+	sortMap(correctPayload)
+
+	// Marshal the sorted maps back into JSON
+	testJSON, err := json.Marshal(testPayload)
+	if err != nil {
+		t.Fatalf("Failed to marshal testPayload: %v", err)
+	}
+
+	correctJSON, err := json.Marshal(correctPayload)
+	if err != nil {
+		t.Fatalf("Failed to marshal correctPayload: %v", err)
+	}
+
+	// Compare the JSON strings
+	if string(testJSON) != string(correctJSON) {
 		t.Error("JSON payload compiled improperly")
-		t.Logf("Expected JSON Payload: %s", correctCompiledJSONPayload)
-		t.Logf("Actual JSON Payload: %s", testCompiledJSONPayload)
+		t.Logf("Expected JSON Payload: %s", correctJSON)
+		t.Logf("Actual JSON Payload: %s", testJSON)
 	}
 
 }
