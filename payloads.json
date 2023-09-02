@@ -1,7 +1,7 @@
 [
     {
         "name": "standard",
-        "url": "https://el-example-listener.tekton.svc.cluster.local:8080",
+        "url": "http://localhost:8080",
         "payload": {
             "Product": "$REPO",
             "Release": "$RELEASE.TAGNAME"
@@ -9,19 +9,19 @@
     },
     {
         "name": "helm-chart",
-        "url": "https://el-example1-listener.tekton.svc.cluster.local:8080",
+        "url": "http://localhost:8080",
         "payload": {
-            "helm_repo": "$REPO_URL",
+            "helm_repo": "$REPO.URL",
             "release_tag": "$RELEASE.TAGNAME"
         }
     },
     {
         "name": "example",
-        "url": "https://el-example2-listener.tekton.svc.cluster.local:8080",
+        "url": "http://localhost:8080",
         "payload": {
             "Other-stuff": "$RELEASE.TAGNAME",
             "Something-else": "$RELEASE.PUBLISHEDAT",
-            "More_stuff": "AUTHOR.LOGIN"
+            "More_stuff": "$AUTHOR.LOGIN"
         }
     }
 ]

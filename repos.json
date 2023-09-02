@@ -4,14 +4,14 @@
         "repo": "dummy",
         "slack": true,
         "prereleases": true,
-        "payloads": [ "standard", "test" ]
+        "payloads": [ "standard", "helm-chart", "example" ]
     },
     {
         "owner": "rancher",
         "repo": "rancher",
         "slack": true,
         "prereleases": true,
-        "payloads": [ "standard", "test" ]
+        "payloads": [ "standard", "helm-chart" ]
     },
     {
         "owner": "k3s-io",
