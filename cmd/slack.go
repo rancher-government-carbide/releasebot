@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const slackurl string = "https://slack.com/api"
+var slackurl string = "https://slack.com/api"
 
 var token = os.Getenv("slack_token")
 var releases_channel = os.Getenv("releases_channel")
