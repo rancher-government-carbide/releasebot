@@ -48,7 +48,7 @@ func monitorRepo(repo RepositoryEntry, payloads []PayloadEntry, prereleases bool
 		loadedReleasesStrings := stringifyLoadedReleases(loadedReleasesMap)
 		log.Printf("%ss in the hashmap for %s/%s: %s\n", releaseType, repo.Owner, repo.Repo, strings.Join(loadedReleasesStrings, ", "))
 
-		LoadNewReleases: latestReleases, err := getLatestReleases(repo.Owner, repo.Repo, prereleases, 10)
+		LoadNewReleases: latestReleases, err := getLatestReleases(repo.Owner, repo.Repo, prereleases, -1)
 		if err != nil {
 			log.Printf("Failed to get latest %ss for %s/%s: %v", releaseType, repo.Owner, repo.Repo, err)
 			time.Sleep(time.Duration(interval) * time.Minute)
