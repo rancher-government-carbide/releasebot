@@ -85,11 +85,12 @@ func getLatestRelease(owner string, repo string) (Release, error) {
 // fetches all releases/prereleases for a repo (default gh api pagination is 30 results)
 func getAllReleases(owner string, repo string) ([]Release, error) {
 	var releases []Release
+	var numberOfReleases int = 100
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		log.Print("No provided github token - requests to the github api will be unathenticated (60 requests/hr rate limit)\n")
 	}
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/%s/releases", github_api_url, owner, repo), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/%s/releases?per_page=%d", github_api_url, owner, repo, numberOfReleases), nil)
 	if err != nil {
 		return releases, fmt.Errorf("failed to create http request: %w", err)
 	}
@@ -146,7 +147,7 @@ func getLatestReleases(owner string, repo string, prerelease bool, count int) ([
 	}
 	// github api is generally already sorted by date already but they don't officially guarantee such
 	latestReleases = sortByPublishDate(latestReleases)
-	if count < 0 {
+	if count == -1 {
 		return latestReleases, nil
 	}
 	if len(latestReleases) > (count - 1) {
