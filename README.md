@@ -29,14 +29,14 @@ The format for such is shown below:
         "repo": "dummy",
         "slack": true,
         "prereleases": true,
-        "payloads": [ "standard", "test" ]
+        "payloads": [ "standard", "helm-chart" ]
     },
     {
         "owner": "rancher",
         "repo": "rancher",
         "slack": true,
         "prereleases": true,
-        "payloads": [ "standard", "test" ]
+        "payloads": [ "standard", "example" ]
     },
     {
         "owner": "k3s-io",
