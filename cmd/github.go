@@ -31,17 +31,19 @@ type Time struct {
 	time.Time
 }
 
-func (t *Time) UnmarshalJSON(data []byte) error {
-	const layout = time.RFC3339
-	parsedTime, err := time.Parse(layout, string(data[1:len(data)-1]))
-	if err != nil {
+func (t *Time) UnmarshalJSON(rawTimestamp []byte) error {
+    var timestamp string
+    if err := json.Unmarshal(rawTimestamp, &timestamp); err != nil {
+        return err
+    }
+
+    parsedTime, err := time.Parse(time.RFC3339, timestamp)
+    if err != nil {
 		t.Time = time.Time{}
-		log.Printf("Failed to decode into type time.Time")
-		// temporary removal of error? future changes to project should render published_at timestamp irrelevant
-		// return err
-	}
-	t.Time = parsedTime
-	return nil
+    }
+
+    t.Time = parsedTime
+    return nil
 }
 
 // sorts releases by publish date (newest to oldest)
@@ -56,34 +58,26 @@ func sortByPublishDate(releases []Release) []Release {
 //
 //lint:ignore U1000 Ignore this unused function
 func getLatestRelease(owner string, repo string) (Release, error) {
-
 	var latestRelease Release
-
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		log.Print("No provided github token - requests to the github api will be unathenticated (60 requests/hr rate limit)\n")
 	}
-
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/%s/releases/latest", github_api_url, owner, repo), nil)
 	if err != nil {
-		log.Print(err)
-		return latestRelease, err
+		return latestRelease, fmt.Errorf("failed to create http request: %w", err)
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Print(err)
-		log.Printf("Failed to get releases for: %s/%s", owner, repo)
-		return latestRelease, err
+		return latestRelease, fmt.Errorf("failed to send http request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(&latestRelease)
 	if err != nil {
-		log.Print(err)
-		log.Printf("Failed to decode releases for: %s/%s", owner, repo)
-		return latestRelease, err
+		return latestRelease, fmt.Errorf("failed to decode releases: %w", err)
 	}
 	return latestRelease, nil
 }
@@ -97,19 +91,19 @@ func getAllReleases(owner string, repo string) ([]Release, error) {
 	}
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/%s/releases", github_api_url, owner, repo), nil)
 	if err != nil {
-		return releases, fmt.Errorf("failed to create http request for %s/%s - %w", owner, repo, err)
+		return releases, fmt.Errorf("failed to create http request: %w", err)
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return releases, fmt.Errorf("failed to send http request for %s/%s - %w", owner, repo, err)
+		return releases, fmt.Errorf("failed to send http request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(&releases)
 	if err != nil {
-		return releases, fmt.Errorf("failed to decode releases for %s/%s - %w", owner, repo, err)
+		return releases, fmt.Errorf("failed to decode releases: %w", err)
 	}
 	return releases, nil
 }
