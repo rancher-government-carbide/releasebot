@@ -39,9 +39,12 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-          - name: config
-            mountPath: /config.json
-            subPath: config.json
+          - name: repos
+            mountPath: /repos.json
+            subPath: repos.json
+          - name: payloads
+            mountPath: /payloads.json
+            subPath: payloads.json
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -55,6 +58,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
-        - name: config
+        - name: repos
           configMap:
-            name: {{ include "releasebot.fullname" . }}-config
+            name: {{ include "releasebot.fullname" . }}-repos
+        - name: payloads
+          configMap:
+            name: {{ include "releasebot.fullname" . }}-payloads

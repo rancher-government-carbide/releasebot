@@ -14,6 +14,7 @@ config:
   interval: 5 # In minutes
   
   # If using an existing secret for the slack token and github token
+  # expected format for the secret can be found in ./templates/env-secret.yaml
   existingSecret: ''
 
   githubToken: abcdef1234567
@@ -24,19 +25,22 @@ config:
       channel: example-release-channel
     prereleases:
       channel: example-prerelease-channel
-  
-  tekton:
-    namespace: example-namespace
-    listener: release
-    port: 8080
-
 
   repos:
   - owner: rancher
     repo: rancher
     slack: false
     prereleases: false
-    tekton: true
+    payloads:
+      - standard
+
+  payloads:
+    - name: standard
+      url: https://el-example-listener.tekton.svc.cluster.local:8080
+      payload:
+        Product: "$REPO"
+        Release: "$RELEASE.TAGNAME"
+
     
 imagePullSecrets: []
 nameOverride: ""

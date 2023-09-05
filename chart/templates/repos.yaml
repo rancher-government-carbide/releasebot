@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "releasebot.fullname" . }}-repos
+data:
+  repos.json: |
+    [
+    {{- range $index, $repo := .Values.config.repos }}
+        {
+            "owner": {{ $repo.owner | quote }},
+            "repo": {{ $repo.repo | quote }},
+            "prereleases": {{ $repo.prereleases }},
+            "slack": {{ $repo.slack }},
+            "payloads": [ 
+             {{- range $index, $payload := $repo.payloads }}
+                {{ $payload | quote }}{{ if ne $index (sub (len $repo.payloads) 1) }},{{end}}
+             {{- end }}
+            ]
+        }{{ if ne $index (sub (len $.Values.config.repos) 1) }},{{end}}
+    {{- end }}
+    ]
