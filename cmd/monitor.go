@@ -64,7 +64,7 @@ LoadInitialReleases:
 			log.Printf("No new %ss for %s/%s\n", releaseType, repo.Owner, repo.Repo)
 		} else {
 			for _, release := range newReleases {
-				log.Printf("Found new %ss for %s/%s: %v\n", releaseType, repo.Owner, repo.Repo, release.GetTagName())
+				log.Printf("Found new %s for %s/%s: %v\n", releaseType, repo.Owner, repo.Repo, release.GetTagName())
 			}
 		}
 		newestReleaseTimestamp = updatedNewestReleaseTimestamp
@@ -107,7 +107,7 @@ func checkForNewReleases(latestReleases []*github.RepositoryRelease, loadedRelea
 	var updatedNewestReleaseTimestamp time.Time
 	var newReleases []*github.RepositoryRelease
 	for _, release := range latestReleases {
-		if !loadedReleasesMap[release.GetTagName()] && release.GetPublishedAt().After(newestReleaseTimestamp) {
+		if !loadedReleasesMap[release.GetTagName()] {
 			newReleases = append(newReleases, release)
 			loadedReleasesMap[release.GetTagName()] = true
 			updatedNewestReleaseTimestamp = release.GetPublishedAt().Time
