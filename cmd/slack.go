@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/google/go-github/v55/github"
 )
 
 var slackurl string = "https://slack.com/api"
@@ -15,16 +17,16 @@ var token = os.Getenv("slack_token")
 var releases_channel = os.Getenv("releases_channel")
 var prereleases_channel = os.Getenv("prereleases_channel")
 
-func slacknotif(release Release, owner string, repo string) error {
+func slacknotif(release *github.RepositoryRelease, owner string, repo string) error {
 
 	if token == "" {
 		log.Fatal("Missing slack token")
 	}
 
-	publishedDate := release.PublishedAt.Time
+	publishedDate := release.GetPublishedAt().Time
 	release_type := "Release"
 	channel := releases_channel
-	if release.Prerelease {
+	if release.GetPrerelease() {
 		release_type = "Prerelease"
 		channel = prereleases_channel
 	}
@@ -46,7 +48,7 @@ func slacknotif(release Release, owner string, repo string) error {
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": "` + release.Name + ` is now available!\n\n<https://github.com/` + owner + `/` + repo + `/releases/tag/` + release.TagName + `>"
+				"text": "` + release.GetName() + ` is now available!\n\n<https://github.com/` + owner + `/` + repo + `/releases/tag/` + release.GetTagName() + `>"
 			},
 			"accessory": {
 				"type": "image",
@@ -59,12 +61,12 @@ func slacknotif(release Release, owner string, repo string) error {
 			"elements": [
 			{
 				"type": "image",
-				"image_url": "` + release.Author.AvatarUrl + `",
+				"image_url": "` + release.Author.GetAvatarURL() + `",
 				"alt_text": "author profile img"
 			},
 			{
 				"type": "mrkdwn",
-				"text": "Authored by: ` + release.Author.Login + ` on ` + publishedDate.Format("Jan 2, 2006") + ` at ` + publishedDate.In(time.UTC).Format("3:4pm MST") + `"
+				"text": "Authored by: ` + release.Author.GetLogin() + ` on ` + publishedDate.Format("Jan 2, 2006") + ` at ` + publishedDate.In(time.UTC).Format("3:04pm MST") + `"
 			}
 			]
 		}
@@ -83,9 +85,9 @@ func slacknotif(release Release, owner string, repo string) error {
 		return err
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	log.Println("slack response Status:", resp.Status)
-	log.Println("slack response Body:", string(body))
-
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error sending slack message - response status: %s - response body : %s", resp.Status, string(body))
+	}
 	return nil
 }

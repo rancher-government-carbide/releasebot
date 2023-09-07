@@ -1,119 +1,59 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
+	"context"
 	"log"
-	"net/http"
 	"os"
 	"sort"
-	"time"
+
+	"github.com/google/go-github/v55/github"
 )
 
-var github_api_url string = "https://api.github.com"
-
-type Release struct {
-	Name        string `json:"name"`
-	TagName     string `json:"tag_name"`
-	Prerelease  bool   `json:"prerelease"`
-	HtmlUrl     string `json:"html_url"`
-	PublishedAt Time   `json:"published_at"`
-	Author      Author `json:"author"`
-}
-
-type Author struct {
-	Login     string `json:"login"`
-	AvatarUrl string `json:"avatar_url"`
-	HtmlUrl   string `json:"html_url"`
-}
-
-type Time struct {
-	time.Time
-}
-
-func (t *Time) UnmarshalJSON(rawTimestamp []byte) error {
-    var timestamp string
-    if err := json.Unmarshal(rawTimestamp, &timestamp); err != nil {
-        return err
-    }
-
-    parsedTime, err := time.Parse(time.RFC3339, timestamp)
-    if err != nil {
-		t.Time = time.Time{}
-    }
-
-    t.Time = parsedTime
-    return nil
-}
-
 // sorts releases by publish date (newest to oldest)
-func sortByPublishDate(releases []Release) []Release {
+func sortByPublishDate(releases []*github.RepositoryRelease) []*github.RepositoryRelease {
 	sort.Slice(releases, func(i, j int) bool {
+		if releases[i].PublishedAt == nil && releases[j].PublishedAt == nil {
+			return false // If both are nil, consider them equal
+		} else if releases[i].PublishedAt == nil {
+			return false // Nil is considered older than non-nil
+		} else if releases[j].PublishedAt == nil {
+			return true // Non-nil is considered newer than nil
+		}
 		return releases[i].PublishedAt.After(releases[j].PublishedAt.Time)
 	})
 	return releases
 }
 
-// fetches only the single latest release from the repo (different endpoint than all releases)
-//
-//lint:ignore U1000 Ignore this unused function
-func getLatestRelease(owner string, repo string) (Release, error) {
-	var latestRelease Release
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		log.Print("No provided github token - requests to the github api will be unathenticated (60 requests/hr rate limit)\n")
-	}
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/%s/releases/latest", github_api_url, owner, repo), nil)
-	if err != nil {
-		return latestRelease, fmt.Errorf("failed to create http request: %w", err)
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return latestRelease, fmt.Errorf("failed to send http request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(&latestRelease)
-	if err != nil {
-		return latestRelease, fmt.Errorf("failed to decode releases: %w", err)
-	}
-	return latestRelease, nil
-}
-
 // fetches all releases/prereleases for a repo (default gh api pagination is 30 results)
-func getAllReleases(owner string, repo string) ([]Release, error) {
-	var releases []Release
-	var numberOfReleases int = 100
+func getAllReleases(owner string, repo string) ([]*github.RepositoryRelease, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		log.Print("No provided github token - requests to the github api will be unathenticated (60 requests/hr rate limit)\n")
 	}
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/%s/releases?per_page=%d", github_api_url, owner, repo, numberOfReleases), nil)
-	if err != nil {
-		return releases, fmt.Errorf("failed to create http request: %w", err)
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return releases, fmt.Errorf("failed to send http request: %w", err)
-	}
-	defer resp.Body.Close()
+	client := github.NewClient(nil).WithAuthToken(token)
+	ctx := context.Background()
+	opt := &github.ListOptions{PerPage: 100}
 
-	err = json.NewDecoder(resp.Body).Decode(&releases)
-	if err != nil {
-		return releases, fmt.Errorf("failed to decode releases: %w", err)
+	var allReleases []*github.RepositoryRelease
+	for {
+		releases, resp, err := client.Repositories.ListReleases(ctx, owner, repo, opt)
+		if err != nil {
+			return releases, err
+		}
+		allReleases = append(allReleases, releases...)
+		if resp.NextPage == 0 {
+			break
+		}
+		opt.Page = resp.NextPage
 	}
-	return releases, nil
+	return allReleases, nil
 }
 
 // filters all prereleases out of the array (leaves only releases)
-func filterPrereleases(releases []Release) []Release {
-	var onlyRegularReleases []Release
+func filterPrereleases(releases []*github.RepositoryRelease) []*github.RepositoryRelease {
+	var onlyRegularReleases []*github.RepositoryRelease
 	for _, release := range releases {
-		if !release.Prerelease {
+		if !release.GetPrerelease() {
 			onlyRegularReleases = append(onlyRegularReleases, release)
 		}
 	}
@@ -121,10 +61,10 @@ func filterPrereleases(releases []Release) []Release {
 }
 
 // filters all releases out of the array (leaves only prereleases)
-func filterReleases(releases []Release) []Release {
-	var onlyPrereleases []Release
+func filterReleases(releases []*github.RepositoryRelease) []*github.RepositoryRelease {
+	var onlyPrereleases []*github.RepositoryRelease
 	for _, release := range releases {
-		if release.Prerelease {
+		if release.GetPrerelease() {
 			onlyPrereleases = append(onlyPrereleases, release)
 		}
 	}
@@ -134,8 +74,8 @@ func filterReleases(releases []Release) []Release {
 // fetches all releases from repo (sorted by publish date)
 //
 // count specifies the maximum number of releases to return, if its less than 0 there is no max
-func getLatestReleases(owner string, repo string, prerelease bool, count int) ([]Release, error) {
-	var latestReleases []Release
+func getLatestReleases(owner string, repo string, prerelease bool, count int) ([]*github.RepositoryRelease, error) {
+	var latestReleases []*github.RepositoryRelease
 	latestReleases, err := getAllReleases(owner, repo)
 	if err != nil {
 		return latestReleases, err

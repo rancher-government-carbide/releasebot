@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/google/go-github/v55/github"
 )
 
 func replaceVariables(data map[string]interface{}, variables map[string]string) {
@@ -29,20 +31,20 @@ func replaceVariables(data map[string]interface{}, variables map[string]string) 
 	}
 }
 
-func parsePayload(release Release, repo RepositoryEntry, payload PayloadEntry) ([]byte, error) {
+func parsePayload(release *github.RepositoryRelease, repo RepositoryEntry, payload PayloadEntry) ([]byte, error) {
 
 	var repo_url string = fmt.Sprintf("git@github.com:%s/%s", repo.Owner, repo.Repo)
 
 	variables := map[string]string{
 		"REPO":                repo.Repo,
 		"REPO.URL":            repo_url,
-		"RELEASE.TAGNAME":     release.TagName,
-		"RELEASE.PRERELEASE":  strconv.FormatBool(release.Prerelease),
-		"RELEASE.HTMLURL":     release.HtmlUrl,
-		"RELEASE.PUBLISHEDAT": release.PublishedAt.String(),
-		"AUTHOR.LOGIN":        release.Author.Login,
-		"AUTHOR.AVATARURL":    release.Author.AvatarUrl,
-		"AUTHOR.HTMLURL":      release.Author.HtmlUrl,
+		"RELEASE.TAGNAME":     release.GetTagName(),
+		"RELEASE.PRERELEASE":  strconv.FormatBool(release.GetPrerelease()),
+		"RELEASE.HTMLURL":     release.GetHTMLURL(),
+		"RELEASE.PUBLISHEDAT": release.GetPublishedAt().String(),
+		"AUTHOR.LOGIN":        release.Author.GetLogin(),
+		"AUTHOR.AVATARURL":    release.Author.GetAvatarURL(),
+		"AUTHOR.HTMLURL":      release.Author.GetHTMLURL(),
 	}
 
 	var data map[string]interface{}
@@ -81,7 +83,7 @@ func sendPayload(jsonPayload []byte, url string) error {
 	return nil
 }
 
-func sendAllPayloads(release Release, repo RepositoryEntry, payloadEntries []PayloadEntry) error {
+func sendAllPayloads(release *github.RepositoryRelease, repo RepositoryEntry, payloadEntries []PayloadEntry) error {
 	for _, payload := range payloadEntries {
 		if repo.Payloads[payload.Name] {
 			renderedPayload, err := parsePayload(release, repo, payload)
