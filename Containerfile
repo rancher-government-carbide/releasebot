@@ -11,6 +11,7 @@ FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /build/releasebot /
-COPY config.json /
+COPY payloads.json /
+COPY repos.json /
 USER nonroot
 ENTRYPOINT [ "/releasebot" ]
