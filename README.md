@@ -4,12 +4,12 @@
 
 A rudimentary daemon that monitors github repos for new releases. 
 
-This is meant to push release events to external sources, currently only slack notifications and tekton pipelines are supported.
-
+This is meant to push release events to external sources.
 Usually this type of event can be pushed by a github action, however if you wish to monitor repos that you don't control then this may come in handy.
 
 ## Configuration
 
+### Environment
 | Environment Variable  | Description                                       | Optional          |
 | --------------------  | -----------                                       | --------          |
 | slack_token           | Oauth token for Your Workspace                    | false             |
@@ -20,9 +20,14 @@ Usually this type of event can be pushed by a github action, however if you wish
 | RELEASEBOT_PAYLOADS   | Path to json payload config file                  | true              |
 | interval              | Frequency to query the github api                 | true              |
 
-If the `RELEASEBOT_REPOS` variable is not specified releasebot will read the repos.json in the current directory. It should contain a json array of github repos that you want to monitor.
+### Config Files
+If the `RELEASEBOT_REPOS` variable is not specified releasebot will read the repos.json in the current directory.
+It should contain a json array of github repos that you want to monitor.
+The members of the payloads array should correspond to entries in the payloads.json file.
 The format for such is shown below:
-```json
+
+repos.json:
+```repos.json
 [
     {
         "owner": "clanktron",
@@ -52,9 +57,19 @@ The format for such is shown below:
     }
 ]
 ```
-If the `RELEASEBOT_PAYLOADS` variable is not specified releasebot will read the payloads.json in the current directory. It should contain a json array of github repos that you want to monitor.
+#### Fields:
+- **owner (string):** The owner or organization name of the GitHub repository.
+- **repo (string):** The name of the GitHub repository.
+- **slack (boolean, optional):** A flag indicating whether Slack notifications are enabled for this repository. It can be true or false (defaults to false).
+- **prereleases (boolean, optional):** A flag indicating whether pre-releases should be monitored as well for this repository. It can be true or false (defaults to false).
+- **payloads (array of strings):** an array of payload types associated with this repository. Possible values include any names of payloads specified in payloads.json.
+
+If the `RELEASEBOT_PAYLOADS` variable is not specified releasebot will read the payloads.json in the current directory.
+It should contain an array of the json payloads you wish to send to the specified urls (webhooks you wish to trigger etc).
 The format for such is shown below:
-```json
+
+payloads.json:
+```payloads.json
 [
     {
         "name": "standard",
@@ -69,7 +84,8 @@ The format for such is shown below:
         "url": "https://el-example1-listener.tekton.svc.cluster.local:8080",
         "payload": {
             "helm_repo": "$REPO_URL",
-            "release_tag": "$RELEASE.TAGNAME"
+            "release_tag": "$RELEASE.TAGNAME",
+            "otherData": "something hardcoded"
         }
     },
     {
@@ -78,25 +94,50 @@ The format for such is shown below:
         "payload": {
             "Other-stuff": "$RELEASE.TAGNAME",
             "Something-else": "$RELEASE.PUBLISHEDAT",
-            "More_stuff": "AUTHOR.LOGIN"
+            "More_stuff": "$AUTHOR.LOGIN"
         }
     }
 ]
 ```
+#### Fields:
+- **name (string):** The name of the json payload to be referenced in repos.json.
+- **url (string):** The url you wish to send your json to.
+- **payload (json object):** A JSON object that you want sent to the address specified in the url field. It can be any valid json. 
+Certain variables are available for runtime substitution if you need information about the release in your json payload. 
+These must be all caps and be prefixed with a `$`.
 
-## Build Binary
-```bash
-make
-```
-## Cleanup
-```bash
-make clean
-```
-## Help
+Available Variables:
+
+| Variable              | Description
+| --------------------  | -----------
+| $REPO                  | Name of the repository
+| $REPO.URL              | ssh url of the repository
+| $RELEASE.TAGNAME       | Tag corresponding to the release
+| $RELEASE.PRERELEASE    | Stringified boolean of whether release is a prerelease
+| $RELEASE.HTMLURL       | Url for viewing the release on Github
+| $RELEASE.PUBLISHEDAT   | Date+Time the release was published at
+| $AUTHOR.LOGIN          | Username of the release author
+| $AUTHOR.AVATARURL      | Url for viewing the Github avatar image of the release author
+| $AUTHOR.HTMLURL        | Url for viewing the Github account of the release author
+
+## Development
+
+#### Build
 ```bash
 make help
+# Available targets:
+#   releasebot            Build the binary (default)
+#   test                  Run all unit tests
+#   lint                  Run go vet and staticcheck
+#   check                 Build, test, and lint the binary
+#   linux                 Build the binary for Linux
+#   darwin                Build the binary for MacOS
+#   windows               Build the binary for Windows
+#   container             Build the container
+#   container-push        Build and push the container
+#   clean                 Clean build results
+#   help                  Show help
 ```
-## Development
 
 #### Git Hooks
 ```bash
