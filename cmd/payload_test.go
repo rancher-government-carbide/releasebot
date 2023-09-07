@@ -10,6 +10,8 @@ import (
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/google/go-github/v55/github"
 )
 
 func TestReplaceVariables(t *testing.T) {
@@ -120,18 +122,16 @@ func TestParsePayload(t *testing.T) {
 			`),
 	}
 
-	var testRelease = Release{
-		Name:       "v2.3.4",
-		TagName:    "v2.3.4",
-		Prerelease: false,
-		HtmlUrl:    "https://example.com/releases/v2.3.4",
-		PublishedAt: Time{
-			Time: time.Date(2023, 7, 16, 12, 0, 0, 0, time.UTC),
-		},
-		Author: Author{
-			Login:     "john_doe",
-			AvatarUrl: "https://example.com/avatar.jpg",
-			HtmlUrl:   "https://example.com/users/john_doe",
+	var testRelease = &github.RepositoryRelease{
+		Name:        github.String("v2.3.4"),
+		TagName:     github.String("v2.3.4"),
+		Prerelease:  github.Bool(false),
+		HTMLURL:     github.String("https://example.com/releases/v2.3.4"),
+		PublishedAt: &github.Timestamp{Time: time.Date(2023, 7, 16, 12, 0, 0, 0, time.UTC)},
+		Author: &github.User{
+			Login:     github.String("john_doe"),
+			AvatarURL: github.String("https://example.com/avatar.jpg"),
+			HTMLURL:   github.String("https://example.com/users/john_doe"),
 		},
 	}
 
