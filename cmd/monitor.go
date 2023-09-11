@@ -44,16 +44,17 @@ func monitorRepo(repo RepositoryEntry, payloads []PayloadEntry, prereleases bool
 		log.Printf("Interval environment variable not set or invalid value - defaulting to 5 minutes")
 		interval = 5
 	}
+	intervalTime := time.Duration(interval) * time.Minute
 
-	loadInitialReleases := loadInitialReleasesFromGithub
+	loadInitialReleases := loadReleasesFromGithub
 	if persist {
-		loadInitialReleases = loadInitialReleasesFromFile
+		loadInitialReleases = loadReleasesFromFile
 	}
 LoadInitialReleases:
 	loadedReleasesMap, err := loadInitialReleases(repo, prereleases)
 	if err != nil {
-		log.Printf("Failed to fetch initial %ss for %s: %v; retrying...\n", releaseType, repoName, err)
-		time.Sleep(time.Duration(interval) * time.Minute)
+		log.Printf("Failed to retrieve initial %ss for %s: %v; retrying...\n", releaseType, repoName, err)
+		time.Sleep(intervalTime)
 		goto LoadInitialReleases
 	}
 
@@ -67,7 +68,7 @@ LoadInitialReleases:
 		latestReleases, err := getLatestReleases(repo.Owner, repo.Repo, prereleases, -1)
 		if err != nil {
 			log.Printf("Failed to get latest %ss for %s: %v", releaseType, repoName, err)
-			time.Sleep(time.Duration(interval) * time.Minute)
+			time.Sleep(intervalTime)
 			goto LoadNewReleases
 		}
 
@@ -86,7 +87,7 @@ LoadInitialReleases:
 			}
 		}
 
-		time.Sleep(time.Duration(interval) * time.Minute)
+		time.Sleep(intervalTime)
 	}
 }
 
@@ -128,17 +129,40 @@ func checkForNewReleases(latestReleases []*github.RepositoryRelease, loadedRelea
 	return newReleases
 }
 
-func loadInitialReleasesFromFile(repo RepositoryEntry, prereleases bool) (map[string]bool, error) {
-	releaseFile := fmt.Sprintf(ReleaseFileFormat, DataFolderPath, repo.Owner, repo.Repo)
-	releaseMap, err := readMapFromFile(releaseFile)
+func initReleaseFile(repo RepositoryEntry, prereleases bool, releaseFile string) error {
+	releaseMap, err := loadReleasesFromGithub(repo, prereleases)
 	if err != nil {
-		return nil, nil
+		return err
+	}
+	err = writeMapToFile(releaseMap, releaseFile)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func loadReleasesFromFile(repo RepositoryEntry, prereleases bool) (map[string]bool, error) {
+	releaseFile := fmt.Sprintf(ReleaseFileFormat, DataFolderPath, repo.Owner, repo.Repo)
+	var releaseMap map[string]bool
+	_, err := os.Stat(releaseFile)
+	if err == nil {
+		releaseMap, err = readMapFromFile(releaseFile)
+		if err != nil {
+			return nil, err
+		}
+	} else if os.IsNotExist(err) {
+		err = initReleaseFile(repo, prereleases, releaseFile)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, err
 	}
 	return releaseMap, nil
 }
 
 // loads initial batch of releases into a hashmap and returns such along with the latest release timestamp
-func loadInitialReleasesFromGithub(repo RepositoryEntry, prereleases bool) (map[string]bool, error) {
+func loadReleasesFromGithub(repo RepositoryEntry, prereleases bool) (map[string]bool, error) {
 	loadedReleasesMap := make(map[string]bool)
 	baseReleases, err := getLatestReleases(repo.Owner, repo.Repo, prereleases, -1)
 	if err != nil {
