@@ -11,7 +11,14 @@ import (
 	"github.com/google/go-github/v55/github"
 )
 
-func initMonitor(repos []RepositoryEntry, payloads []PayloadEntry) {
+var persist, _ = strconv.ParseBool(os.Getenv("PERSIST"))
+
+func Monitor(repos []RepositoryEntry, payloads []PayloadEntry) {
+	if persist {
+		if err := ensureDataFolder(DataFolderPath); err != nil {
+			log.Fatalf("%v", err)
+		}
+	}
 	for i := 0; i < len(repos); i++ {
 		if repos[i].Prereleases {
 			go monitorRepo(repos[i], payloads, true)
@@ -26,6 +33,7 @@ func initMonitor(repos []RepositoryEntry, payloads []PayloadEntry) {
 // periodically checks the github api for new releases
 func monitorRepo(repo RepositoryEntry, payloads []PayloadEntry, prereleases bool) {
 
+	repoName := fmt.Sprintf("%s/%s", repo.Owner, repo.Repo)
 	releaseType := "release"
 	if prereleases {
 		releaseType = "prerelease"
@@ -37,43 +45,43 @@ func monitorRepo(repo RepositoryEntry, payloads []PayloadEntry, prereleases bool
 		interval = 5
 	}
 
+	loadInitialReleases := loadInitialReleasesFromGithub
+	if persist {
+		loadInitialReleases = loadInitialReleasesFromFile
+	}
 LoadInitialReleases:
-	loadedReleasesMap, newestReleaseTimestamp, err := loadInitialReleases(repo, prereleases)
+	loadedReleasesMap, err := loadInitialReleases(repo, prereleases)
 	if err != nil {
-		log.Printf("Failed to fetch initial %ss for %s/%s: %v; retrying...\n", releaseType, repo.Owner, repo.Repo, err)
+		log.Printf("Failed to fetch initial %ss for %s: %v; retrying...\n", releaseType, repoName, err)
 		time.Sleep(time.Duration(interval) * time.Minute)
 		goto LoadInitialReleases
 	}
 
 	for {
 
-		// temporary debugging: print the releases in the map
+		// "temporary" debugging: print the releases in the map
 		loadedReleasesStrings := stringifyLoadedReleases(loadedReleasesMap)
-		log.Printf("%ss in the hashmap for %s/%s: %s\n", releaseType, repo.Owner, repo.Repo, strings.Join(loadedReleasesStrings, ", "))
+		log.Printf("%ss in the hashmap for %s: %s\n", releaseType, repoName, strings.Join(loadedReleasesStrings, ", "))
 
 	LoadNewReleases:
 		latestReleases, err := getLatestReleases(repo.Owner, repo.Repo, prereleases, -1)
 		if err != nil {
-			log.Printf("Failed to get latest %ss for %s/%s: %v", releaseType, repo.Owner, repo.Repo, err)
+			log.Printf("Failed to get latest %ss for %s: %v", releaseType, repoName, err)
 			time.Sleep(time.Duration(interval) * time.Minute)
 			goto LoadNewReleases
 		}
 
-		newReleases, updatedNewestReleaseTimestamp := checkForNewReleases(latestReleases, loadedReleasesMap, newestReleaseTimestamp)
+		newReleases := checkForNewReleases(latestReleases, loadedReleasesMap)
 		if len(newReleases) == 0 {
-			log.Printf("No new %ss for %s/%s\n", releaseType, repo.Owner, repo.Repo)
+			log.Printf("No new %ss for %s\n", releaseType, repoName)
 		} else {
 			for _, release := range newReleases {
-				log.Printf("Found new %s for %s/%s: %v\n", releaseType, repo.Owner, repo.Repo, release.GetTagName())
-			}
-		}
-		newestReleaseTimestamp = updatedNewestReleaseTimestamp
-
-		for _, release := range newReleases {
-			errors := newReleaseActions(repo, release, payloads)
-			if len(errors) != 0 {
-				for _, err := range errors {
-					log.Printf("Action failed for new %s %s/%s (%s): %v", releaseType, repo.Owner, repo.Repo, release.GetTagName(), err)
+				log.Printf("Found new %s for %s: %v\n", releaseType, repoName, release.GetTagName())
+				errors := newReleaseActions(repo, release, payloads)
+				if len(errors) != 0 {
+					for _, err := range errors {
+						log.Printf("Action failed for new %s %s (%s): %v", releaseType, repoName, release.GetTagName(), err)
+					}
 				}
 			}
 		}
@@ -95,6 +103,12 @@ func newReleaseActions(repo RepositoryEntry, release *github.RepositoryRelease, 
 	if err != nil {
 		errors = append(errors, fmt.Errorf("error sending payload: %v", err))
 	}
+	if persist {
+		err := writeReleaseToFile(release.GetTagName(), repo.Owner, repo.Repo)
+		if err != nil {
+			errors = append(errors, fmt.Errorf("error writing release to file: %v", err))
+		}
+	}
 	if len(errors) > 0 {
 		return errors
 	}
@@ -103,36 +117,37 @@ func newReleaseActions(repo RepositoryEntry, release *github.RepositoryRelease, 
 
 // Checks if any releases in the array are new. If there are some returns an array of the new ones
 // along with the newest timestamp among them. The timestamp is unchanged from the input if there are no new releases.
-func checkForNewReleases(latestReleases []*github.RepositoryRelease, loadedReleasesMap map[string]bool, newestReleaseTimestamp time.Time) ([]*github.RepositoryRelease, time.Time) {
-	var updatedNewestReleaseTimestamp time.Time
+func checkForNewReleases(latestReleases []*github.RepositoryRelease, loadedReleasesMap map[string]bool) []*github.RepositoryRelease {
 	var newReleases []*github.RepositoryRelease
 	for _, release := range latestReleases {
 		if !loadedReleasesMap[release.GetTagName()] {
 			newReleases = append(newReleases, release)
 			loadedReleasesMap[release.GetTagName()] = true
-			updatedNewestReleaseTimestamp = release.GetPublishedAt().Time
 		}
 	}
-	return newReleases, updatedNewestReleaseTimestamp
+	return newReleases
+}
+
+func loadInitialReleasesFromFile(repo RepositoryEntry, prereleases bool) (map[string]bool, error) {
+	releaseFile := fmt.Sprintf(ReleaseFileFormat, DataFolderPath, repo.Owner, repo.Repo)
+	releaseMap, err := readMapFromFile(releaseFile)
+	if err != nil {
+		return nil, nil
+	}
+	return releaseMap, nil
 }
 
 // loads initial batch of releases into a hashmap and returns such along with the latest release timestamp
-func loadInitialReleases(repo RepositoryEntry, prereleases bool) (map[string]bool, time.Time, error) {
-	var newestReleaseTimestamp time.Time
+func loadInitialReleasesFromGithub(repo RepositoryEntry, prereleases bool) (map[string]bool, error) {
 	loadedReleasesMap := make(map[string]bool)
 	baseReleases, err := getLatestReleases(repo.Owner, repo.Repo, prereleases, -1)
 	if err != nil {
-		return loadedReleasesMap, time.Time{}, err
+		return loadedReleasesMap, err
 	}
 	for _, release := range baseReleases {
-		if release.GetPublishedAt().After(newestReleaseTimestamp) {
-			newestReleaseTimestamp = release.GetPublishedAt().Time
-		}
-		if !loadedReleasesMap[release.GetTagName()] {
-			loadedReleasesMap[release.GetTagName()] = true
-		}
+		loadedReleasesMap[release.GetTagName()] = true
 	}
-	return loadedReleasesMap, newestReleaseTimestamp, nil
+	return loadedReleasesMap, nil
 }
 
 // takes the current release hashmap and returns an array of all the release names in such
@@ -144,4 +159,13 @@ func stringifyLoadedReleases(loadedReleasesMap map[string]bool) []string {
 		}
 	}
 	return loadedReleasesMessage
+}
+
+func writeReleaseToFile(releaseTag string, repoOwner string, repoName string) error {
+	releaseHistoryFile := fmt.Sprintf(ReleaseFileFormat, DataFolderPath, repoOwner, repoName)
+	err := appendStringToFile(releaseTag, releaseHistoryFile)
+	if err != nil {
+		return err
+	}
+	return nil
 }
