@@ -129,18 +129,6 @@ func checkForNewReleases(latestReleases []*github.RepositoryRelease, loadedRelea
 	return newReleases
 }
 
-func initReleaseFile(repo RepositoryEntry, prereleases bool, releaseFile string) error {
-	releaseMap, err := loadReleasesFromGithub(repo, prereleases)
-	if err != nil {
-		return err
-	}
-	err = writeMapToFile(releaseMap, releaseFile)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func loadReleasesFromFile(repo RepositoryEntry, prereleases bool) (map[string]bool, error) {
 	releaseFile := fmt.Sprintf(ReleaseFileFormat, DataFolderPath, repo.Owner, repo.Repo)
 	var releaseMap map[string]bool
@@ -151,7 +139,12 @@ func loadReleasesFromFile(repo RepositoryEntry, prereleases bool) (map[string]bo
 			return nil, err
 		}
 	} else if os.IsNotExist(err) {
-		err = initReleaseFile(repo, prereleases, releaseFile)
+		log.Printf("release history file doesn't exist for %s/%s, initializing such now...", repo.Owner, repo.Repo)
+		releaseMap, err = loadReleasesFromGithub(repo, prereleases)
+		if err != nil {
+			return nil, err
+		}
+		err = writeMapToFile(releaseMap, releaseFile)
 		if err != nil {
 			return nil, err
 		}
@@ -191,5 +184,6 @@ func writeReleaseToFile(releaseTag string, repoOwner string, repoName string) er
 	if err != nil {
 		return err
 	}
+	log.Printf("appended releaseTag %s to release history file %s", releaseTag, releaseHistoryFile)
 	return nil
 }
