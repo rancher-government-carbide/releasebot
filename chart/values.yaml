@@ -10,63 +10,60 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 
-config:
-  interval: 5 # In minutes
+slack:
+  token: abcdef1234567
+  releases:
+    channel: example-release-channel
+  prereleases:
+    channel: example-prerelease-channel
+
+# sleep period between each query of the Github API
+interval: 5 # In minutes
+githubToken: abcdef1234567
+
+# If using an existing secret for the slack token and github token
+# expected format for the secret can be found in ./templates/env-secret.yaml
+existingSecret: ''
+
+# setting this to true ensures releasebot will detect any missed releases during downtime
+persistence:
+  enabled: true
+  # If using an existing PVC for tracking release histories
+  existingPersistentVolumeClaim: ''
   
-  # If using an existing secret for the slack token and github token
-  # expected format for the secret can be found in ./templates/env-secret.yaml
-  existingSecret: ''
-
-  githubToken: abcdef1234567
-
-  slack:
-    token: abcdef1234567
-    releases:
-      channel: example-release-channel
-    prereleases:
-      channel: example-prerelease-channel
-
-  repos:
-  - owner: rancher
-    repo: rancher
-    slack: false
-    prereleases: false
-    payloads:
-      - standard
-
+repos:
+- owner: rancher
+  repo: rancher
+  slack: false
+  prereleases: false
   payloads:
-    - name: standard
-      url: https://el-example-listener.tekton.svc.cluster.local:8080
-      payload:
-        Product: "$REPO"
-        Release: "$RELEASE.TAGNAME"
+    - standard
+
+payloads:
+  - name: standard
+    url: https://el-example-listener.tekton.svc.cluster.local:8080
+    payload:
+      Product: "$REPO"
+      Release: "$RELEASE.TAGNAME"
 
     
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
 podAnnotations: {}
 
-podSecurityContext: {}
-  # fsGroup: 2000
+podSecurityContext:
+  runAsUser: 1001
+  runAsGroup: 2000
+  fsGroup: 2000
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
