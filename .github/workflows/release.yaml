@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      release-upload-url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ github.ref }}
+          tag_name: ${{ github.ref }}
+          # body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  package-and-publish-helm-chart:
+    needs: release
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: install helm
+        uses: azure/setup-helm@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: package helm chart
+        run: helm package --dependency-update ./chart
+
+      - name: install yq
+        run: |
+          VERSION=v4.34.1
+          BINARY=yq_linux_amd64
+          curl -Lo yq https://github.com/mikefarah/yq/releases/download/$VERSION/$BINARY && chmod +x yq
+
+      - name: get helm chart name and version
+        run: |
+          CHART_NAME=$(helm show chart ./chart | ./yq .name)
+          CHART_VERSION=$(helm show chart ./chart | ./yq .version)
+          echo "CHART_NAME=$CHART_NAME" >> $GITHUB_ENV
+          echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
+
+      - name: upload chart to release artifacts
+        uses: actions/upload-release-asset@v1
+        id: upload-chart
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ needs.release.outputs.release-upload-url }}
+          asset_path: ./${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz
+          asset_name: ${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz
+          asset_content_type: application/x-tar
+
+      - name: generate helm index
+        run: helm repo index . --url $DOWNLOAD_URL --merge pages/index.yaml
+        env:
+          DOWNLOAD_URL: ${{ steps.upload-chart.outputs.browser_download_url }}
+
+      - name: commit to temporary branch
+        run: |
+          INDEX=pages/index.yaml
+          HASH=$(sudo cat /dev/random | tr -dc 'a-zA-Z0-9~!@#$%^&*_-'  | head -c 7)
+          echo "HASH=$HASH" >> $GITHUB_ENV
+          git checkout -b helm_index_update_"$HASH"
+          git add $INDEX && git commit $INDEX -m "Updating index.yaml for new release"
+
+      - name: create pull request
+        run: gh pr create -B main -H helm_index_update_"$HASH" --title 'Merge helm_index_update into main' --body 'Created by Github release action'
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
