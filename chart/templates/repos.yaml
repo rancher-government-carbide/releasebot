@@ -5,7 +5,7 @@ metadata:
 data:
   repos.json: |
     [
-    {{- range $index, $repo := .Values.config.repos }}
+    {{- range $index, $repo := .Values.repos }}
         {
             "owner": {{ $repo.owner | quote }},
             "repo": {{ $repo.repo | quote }},
@@ -16,6 +16,6 @@ data:
                 {{ $payload | quote }}{{ if ne $index (sub (len $repo.payloads) 1) }},{{end}}
              {{- end }}
             ]
-        }{{ if ne $index (sub (len $.Values.config.repos) 1) }},{{end}}
+        }{{ if ne $index (sub (len $.Values.repos) 1) }},{{end}}
     {{- end }}
     ]

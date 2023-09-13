@@ -5,11 +5,11 @@ metadata:
 data:
   payloads.json: |
     [
-    {{- range $index, $payload := .Values.config.payloads }}
+    {{- range $index, $payload := .Values.payloads }}
         {
             "name": "{{ $payload.name }}",
             "url": "{{ $payload.url }}",
             "payload": {{ toJson .payload }}
-        }{{ if ne $index (sub (len $.Values.config.payloads) 1) }},{{end}}
+        }{{ if ne $index (sub (len $.Values.payloads) 1) }},{{end}}
     {{- end }}
     ]

@@ -22,7 +22,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "releasebot.serviceAccountName" . }}
+      automountServiceAccountToken: false
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -31,7 +31,7 @@ spec:
           - configMapRef:
               name: {{ include "releasebot.fullname" . }}-env
           - secretRef:
-              name: {{ if .Values.config.existingSecret }}{{ .Values.config.existingSecret }}{{ else }}{{ include "releasebot.fullname" . }}-env{{ end }}
+              name: {{ if .Values.existingSecret }}{{ .Values.existingSecret }}{{ else }}{{ include "releasebot.fullname" . }}-env{{ end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -45,6 +45,8 @@ spec:
           - name: payloads
             mountPath: /payloads.json
             subPath: payloads.json
+          - name: data
+            mountPath: /data
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -64,3 +66,8 @@ spec:
         - name: payloads
           configMap:
             name: {{ include "releasebot.fullname" . }}-payloads
+        {{- if .Values.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ if .Values.persistence.existingPersistentVolumeClaim }}{{ .Values.existingPersistentVolumeClaim  }}{{ else }}{{ include "releasebot.fullname" . }}-data{{ end }}
+        {{ end }}

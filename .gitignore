@@ -28,6 +28,9 @@ build/
 k8s/
 !k8s/example
 
+# data dir
+data/*
+
 # env credentials
 *.env
 

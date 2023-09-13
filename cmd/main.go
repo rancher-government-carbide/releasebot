@@ -16,6 +16,6 @@ func main() {
 		log.Fatalf("Error loading payloads file: %v", err)
 	}
 
-	initMonitor(repos, payloads)
+	Monitor(repos, payloads)
 
 }

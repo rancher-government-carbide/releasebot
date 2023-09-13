@@ -9,6 +9,7 @@ GOENV=GOARCH=amd64 CGO_ENABLED=0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
 TEST_FLAGS=-v -cover -count 1
 CONTAINER_CLI=nerdctl
+DATA_FOLDER=./data
 
 # Build the binary
 $(BINARY_NAME):
@@ -48,7 +49,7 @@ dependencies:
 
 # Clean the binary
 clean:
-	rm -f $(BINARY_NAME)
+	rm -rf $(BINARY_NAME) $(DATA_FOLDER)
 
 # Show help
 help:

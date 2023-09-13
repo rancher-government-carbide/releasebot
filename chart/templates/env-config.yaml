@@ -6,6 +6,7 @@ metadata:
 data:
   RELEASEBOT_REPOS: /repos.json
   RELEASEBOT_PAYLOADS: /payloads.json
-  interval: {{ .Values.config.interval | quote }}
-  releases_channel: {{ .Values.config.slack.releases.channel | quote }}
-  prereleases_channel: {{ .Values.config.slack.prereleases.channel | quote }}
+  PERSIST: {{ .Values.persistence.enabled | quote }}
+  interval: {{ .Values.interval | quote }}
+  releases_channel: {{ .Values.slack.releases.channel | quote }}
+  prereleases_channel: {{ .Values.slack.prereleases.channel | quote }}

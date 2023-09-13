@@ -10,15 +10,16 @@ Usually this type of event can be pushed by a github action, however if you wish
 ## Configuration
 
 ### Environment
-| Environment Variable  | Description                                       | Optional          |
-| --------------------  | -----------                                       | --------          |
-| slack_token           | Oauth token for Your Workspace                    | false             |
-| releases_channel      | Channel ID to receive release notifications       | false             |
-| prereleases_channel   | Channel ID to receive prerelease notifications    | false             |
-| GITHUB_TOKEN          | Github token for authorizing requests             | true              |
-| RELEASEBOT_REPOS      | Path to json repo config file                     | true              |
-| RELEASEBOT_PAYLOADS   | Path to json payload config file                  | true              |
-| interval              | Frequency to query the github api                 | true              |
+| Environment Variable  | Description                                                                       | Optional  |
+| --------------------  | -----------                                                                       | --------  |
+| slack_token           | Oauth token for Your Workspace                                                    | false     |
+| releases_channel      | Channel ID to receive release notifications                                       | false     |
+| prereleases_channel   | Channel ID to receive prerelease notifications                                    | false     |
+| GITHUB_TOKEN          | Github token for authorizing requests                                             | true      |
+| RELEASEBOT_REPOS      | Path to json repo config file                                                     | true      |
+| RELEASEBOT_PAYLOADS   | Path to json payload config file                                                  | true      |
+| PERSIST               | Set to "true" or "TRUE" if you wish to track releases across releasebot restarts  | true      |
+| interval              | Frequency to query the github api                                                 | true      |
 
 ### Config Files
 If the `RELEASEBOT_REPOS` variable is not specified releasebot will read the repos.json in the current directory.
