@@ -121,6 +121,14 @@ Available Variables:
 | $AUTHOR.AVATARURL      | Url for viewing the Github avatar image of the release author
 | $AUTHOR.HTMLURL        | Url for viewing the Github account of the release author
 
+## Helm
+
+```bash
+export HELM_RELEASE_NAME=releasebot
+export VALUES_FILE=values.yaml
+helm install $HELM_RELEASE_NAME ./chart --values $VALUES_FILE
+```
+
 ## Development
 
 #### Build
