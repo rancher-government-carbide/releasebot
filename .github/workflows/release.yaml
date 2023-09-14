@@ -36,6 +36,8 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-latest
+    outputs:
+      browser_download_url: ${{ steps.upload-chart.outputs.browser_download_url }}
     steps:
       - name: checkout
         uses: actions/checkout@v3
@@ -49,7 +51,7 @@ jobs:
 
       - name: package helm chart
         run: |
-          helm package -u ./chart -d pages/
+          helm package -u ./chart
 
       - name: install yq
         run: |
@@ -71,31 +73,47 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ needs.release.outputs.release-upload-url }}
-          asset_path: ./pages/${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz
+          asset_path: ./${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz
           asset_name: ${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz
           asset_content_type: application/x-tar
 
+  pr-for-helm-index-update:
+    needs: package-and-publish-helm-chart
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          ref: main
       - name: generate helm index
         run: |
-          cd pages
+          GH_PAGES_FOLDER=pages
+          echo "GH_PAGES_FOLDER=$GH_PAGES_FOLDER" >> $GITHUB_ENV
+          cd $GH_PAGES_FOLDER
+          curl -LO "$DOWNLOAD_URL"
           helm repo index . --url $DOWNLOAD_URL --merge index.yaml
+          cd $(git rev-parse --show-toplevel)
         env:
-          DOWNLOAD_URL: ${{ steps.upload-chart.outputs.browser_download_url }}
+          DOWNLOAD_URL: ${{ needs.package-and-publish-helm-chart.outputs.browser_download_url }}
 
       - name: commit to temporary branch
         run: |
-          INDEX=pages/index.yaml
+          INDEX=$GH_PAGES_FOLDER/index.yaml
           HASH=$(echo "$GITHUB_SHA" | head -c 5)
-          echo "HASH=$HASH" >> $GITHUB_ENV
+          BRANCH_NAME=helm-index-update-"$HASH"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           git config --global user.email "github@action.com"                                                                                                                                                       │
           git config --global user.name "Release Action"
-          git checkout -b helm-index-update-"$HASH"
-          git add $INDEX && git commit $INDEX -m "Updating index.yaml for new release"
-          git push origin helm_index_update_"$HASH"
+          git checkout -b "$BRANCH_NAME"
+          git add "$INDEX" && git commit $INDEX -m "Updating index.yaml for new release"
+          git push origin "$BRANCH_NAME"
         env:
           GITHUB_SHA: ${{ github.sha }}
 
       - name: create pull request
-        run: gh pr create -B main -H helm-index-update-"$HASH" --title 'Merge helm_index_update into main' --body 'Created by Github release action'
+        run: gh pr create -B throwaway -H "$BRANCH_NAME" --title "Merge $BRANCH_NAME into main" --body 'Created by Github release action'
         env:
           GITHUB_TOKEN: ${{ github.token }}
