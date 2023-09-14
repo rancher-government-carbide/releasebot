@@ -48,7 +48,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: package helm chart
-        run: helm package --dependency-update ./chart
+        run: |
+          helm package -u ./chart -d pages/
 
       - name: install yq
         run: |
@@ -70,24 +71,31 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ needs.release.outputs.release-upload-url }}
-          asset_path: ./${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz
+          asset_path: ./pages/${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz
           asset_name: ${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz
           asset_content_type: application/x-tar
 
       - name: generate helm index
-        run: helm repo index . --url $DOWNLOAD_URL --merge pages/index.yaml
+        run: |
+          cd pages
+          helm repo index . --url $DOWNLOAD_URL --merge index.yaml
         env:
           DOWNLOAD_URL: ${{ steps.upload-chart.outputs.browser_download_url }}
 
       - name: commit to temporary branch
         run: |
           INDEX=pages/index.yaml
-          HASH=$(sudo cat /dev/random | tr -dc 'a-zA-Z0-9~!@#$%^&*_-'  | head -c 7)
+          HASH=$(echo "$GITHUB_SHA" | head -c 5)
           echo "HASH=$HASH" >> $GITHUB_ENV
-          git checkout -b helm_index_update_"$HASH"
+          git config --global user.email "github@action.com"                                                                                                                                                       │
+          git config --global user.name "Release Action"
+          git checkout -b helm-index-update-"$HASH"
           git add $INDEX && git commit $INDEX -m "Updating index.yaml for new release"
+          git push origin helm_index_update_"$HASH"
+        env:
+          GITHUB_SHA: ${{ github.sha }}
 
       - name: create pull request
-        run: gh pr create -B main -H helm_index_update_"$HASH" --title 'Merge helm_index_update into main' --body 'Created by Github release action'
+        run: gh pr create -B main -H helm-index-update-"$HASH" --title 'Merge helm_index_update into main' --body 'Created by Github release action'
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
