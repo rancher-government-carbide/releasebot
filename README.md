@@ -123,9 +123,20 @@ Available Variables:
 
 ## Helm
 
+Add public source:
+```bash
+helm repo add releasebot https://rancher-government-carbide.github.io/releasebot
+helm repo update
+```
+
+Install:
 ```bash
 export HELM_RELEASE_NAME=releasebot
 export VALUES_FILE=values.yaml
+# from public release
+helm install $HELM_RELEASE_NAME releasebot/releasebot --values $VALUES_FILE
+# OR
+# with locally cloned repo
 helm install $HELM_RELEASE_NAME ./chart --values $VALUES_FILE
 ```
 
