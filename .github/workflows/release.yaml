@@ -114,6 +114,6 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
 
       - name: create pull request
-        run: gh pr create -B throwaway -H "$BRANCH_NAME" --title "Merge $BRANCH_NAME into main" --body 'Created by Github release action'
+        run: gh pr create -B main -H "$BRANCH_NAME" --title "Merge $BRANCH_NAME into main" --body 'Created by Github release action'
         env:
           GITHUB_TOKEN: ${{ github.token }}
