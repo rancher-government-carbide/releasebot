@@ -3,7 +3,7 @@
 BINARY_NAME=releasebot
 CONTAINER_NAME=clanktron/releasebot
 SRC=./cmd
-VERSION=0.1.0
+VERSION=0.1.2
 COMMIT_HASH=$(shell git rev-parse HEAD)
 GOENV=GOARCH=amd64 CGO_ENABLED=0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
