@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+    <title>Releasebot Helm Chart</title>
+
+    <style>
+      body {
+        font-family: Arial, Geneva, Helvetica, sans-serif;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <h1 id="releasebot-header">Releasebot Helm Chart</h1>
+    <h2 id="usage">How To Use (Internet)</h2>
+
+    <code>
+    $ helm repo add releasebot https://rancher-government-carbide.github.io/releasebot<br />
+    $ helm repo update<br />
+    $ helm search repo releasebot<br />
+    $ helm install example-release releasebot/releasebot
+    </code>
+
+    <h2 id="airgap">How to Use (Airgap)</h2>
+    <h3>On Connected Device</h3>
+    <code>
+    $ helm repo add releasebot https://rancher-government-carbide.github.io/releasebot<br />
+    $ helm repo update<br />
+    $ helm search repo releasebot<br />
+    $ helm pull releasebot/releasebot
+    </code>
+
+    <p>
+    Take the resulting <code>tgz</code> file over the airgap.
+    </p>
+    
+
+    <h3>On Airgapped Device</h3>
+    <code>
+      $ helm install example-release releasebot-x.y.z.tgz<chart>
+    </code>
+  </body>
+</html>
