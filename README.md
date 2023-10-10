@@ -146,17 +146,14 @@ helm install $HELM_RELEASE_NAME ./chart --values $VALUES_FILE
 ```bash
 make help
 # Available targets:
-#   releasebot            Build the binary (default)
-#   test                  Run all unit tests
-#   lint                  Run go vet and staticcheck
-#   check                 Build, test, and lint the binary
-#   linux                 Build the binary for Linux
-#   darwin                Build the binary for MacOS
-#   windows               Build the binary for Windows
-#   container             Build the container
-#   container-push        Build and push the container
-#   clean                 Clean build results
-#   help                  Show help
+#   releasebot 		Build the binary (default)
+#   test 			Run all unit tests
+#   lint 			Run go vet and staticcheck
+#   check 		Test and lint the binary
+#   container 		Build the container
+#   container-push 	Build and push the container
+#   clean 		Clean build results and data folder
+#   help 			Show help
 ```
 
 #### Git Hooks
