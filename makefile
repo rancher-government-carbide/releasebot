@@ -8,7 +8,7 @@ COMMIT_HASH=$(shell git rev-parse HEAD)
 GOENV=CGO_ENABLED=0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
 TEST_FLAGS=-v -cover -count 1
-CONTAINER_CLI=nerdctl
+CLI=nerdctl
 DATA_FOLDER=./data
 
 # Build the binary
@@ -28,11 +28,11 @@ lint:
 
 # Build the container image
 container: clean
-	$(CONTAINER_CLI) build -t $(CONTAINER_NAME):$(COMMIT_HASH) -t $(CONTAINER_NAME):latest .
+	$(CLI) build -t $(CONTAINER_NAME):$(COMMIT_HASH) -t $(CONTAINER_NAME):latest .
 	
 # Push the binary
 container-push: container
-	$(CONTAINER_CLI) push $(CONTAINER_NAME):$(COMMIT_HASH) && $(CONTAINER_CLI) push $(CONTAINER_NAME):latest
+	$(CLI) push $(CONTAINER_NAME):$(COMMIT_HASH) && $(CLI) push $(CONTAINER_NAME):latest
 
 dependencies:
 	go mod tidy && go get -v -d ./...
@@ -50,5 +50,6 @@ help:
 	@printf "  check 		Test and lint the binary\n"
 	@printf "  container 		Build the container\n"
 	@printf "  container-push 	Build and push the container\n"
+	@printf "  dependencies 		Ensure dependencies are available\n"
 	@printf "  clean 		Clean build results and data folder\n"
 	@printf "  help 			Show help\n"
