@@ -92,7 +92,7 @@ LoadInitialReleases:
 			log.WithFields(log.Fields{
 				"releaseType": releaseType,
 				"repoName":    repoName,
-			}).Info("No new releases", releaseType, repoName)
+			}).Info("No new releases")
 		} else {
 			for _, release := range newReleases {
 				log.WithFields(log.Fields{
