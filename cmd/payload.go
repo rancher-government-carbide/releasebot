@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/google/go-github/v55/github"
 )
@@ -49,7 +50,9 @@ func parsePayload(release *github.RepositoryRelease, repo RepositoryEntry, paylo
 
 	var data map[string]interface{}
 	if err := json.Unmarshal(payload.Payload, &data); err != nil {
-		log.Printf("Failed to unmarshall payload: %v", err)
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("Failed to unmarshall payload")
 	}
 
 	replaceVariables(data, variables)
@@ -76,7 +79,11 @@ func sendPayload(jsonPayload []byte, url string) error {
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Failed to deliver payload (%s) to url (%s)", body, url)
+		log.WithFields(log.Fields{
+			"body":  body,
+			"url":   url,
+			"error": err,
+		}).Error("Failed to deliver payload to url")
 		return err
 	}
 

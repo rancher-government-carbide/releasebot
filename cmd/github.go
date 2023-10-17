@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"sort"
 
@@ -28,7 +28,7 @@ func sortByPublishDate(releases []*github.RepositoryRelease) []*github.Repositor
 func getAllReleases(owner string, repo string) ([]*github.RepositoryRelease, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
-		log.Print("No provided github token - requests to the github api will be unathenticated (60 requests/hr rate limit)\n")
+		log.Info("No provided github token - requests to the github api will be unathenticated (60 requests/hr rate limit)\n")
 	}
 	client := github.NewClient(nil).WithAuthToken(token)
 	ctx := context.Background()
