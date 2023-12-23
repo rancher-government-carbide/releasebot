@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type RepositoryEntry struct {
@@ -42,8 +43,10 @@ func loadRepos(config *[]RepositoryEntry) error {
 
 	configpath := os.Getenv("RELEASEBOT_REPOS")
 	if configpath == "" {
-		log.Printf("Defaulting to ./repos.json since no config path was specified.\n")
 		configpath = "repos.json"
+		log.WithFields(log.Fields{
+			"file": configpath,
+		}).Info("Using default repo file since no config path was specified")
 	}
 
 	configFile, err := os.Open(configpath)
@@ -65,8 +68,10 @@ func loadPayloads(config *[]PayloadEntry) error {
 
 	configpath := os.Getenv("RELEASEBOT_PAYLOADS")
 	if configpath == "" {
-		log.Printf("Defaulting to ./payloads.json since no config path was specified.\n")
 		configpath = "payloads.json"
+		log.WithFields(log.Fields{
+			"file": configpath,
+		}).Info("Using default payload file since no config path was specified")
 	}
 
 	configFile, err := os.Open(configpath)

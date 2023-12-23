@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/google/go-github/v55/github"
 )
@@ -41,7 +42,9 @@ func monitorRepo(repo RepositoryEntry, payloads []PayloadEntry, prereleases bool
 
 	interval, err := strconv.ParseInt(os.Getenv("interval"), 10, 64)
 	if err != nil {
-		log.Printf("Interval environment variable not set or invalid value - defaulting to 5 minutes")
+		log.WithFields(log.Fields{
+			"parsedInterval": interval,
+		}).Info("Interval environment variable not set or invalid - defaulting to 5 minutes")
 		interval = 5
 	}
 	intervalTime := time.Duration(interval) * time.Minute
@@ -53,35 +56,59 @@ func monitorRepo(repo RepositoryEntry, payloads []PayloadEntry, prereleases bool
 LoadInitialReleases:
 	loadedReleasesMap, err := loadInitialReleases(repo, prereleases)
 	if err != nil {
-		log.Printf("Failed to retrieve initial %ss for %s: %v; retrying...\n", releaseType, repoName, err)
+		log.WithFields(log.Fields{
+			"releaseType": releaseType,
+			"repoName":    repoName,
+			"error":       err,
+		}).Error("Failed to retrieve initial releases, retrying...")
 		time.Sleep(intervalTime)
 		goto LoadInitialReleases
 	}
 
 	for {
 
-		// "temporary" debugging: print the releases in the map
 		loadedReleasesStrings := stringifyLoadedReleases(loadedReleasesMap)
-		log.Printf("%ss in the hashmap for %s: %s\n", releaseType, repoName, strings.Join(loadedReleasesStrings, ", "))
+		log.WithFields(log.Fields{
+			"releaseType": releaseType,
+			"repoName":    repoName,
+			"error":       err,
+			"hashmap":     strings.Join(loadedReleasesStrings, ", "),
+		}).Debug()
 
 	LoadNewReleases:
 		latestReleases, err := getLatestReleases(repo.Owner, repo.Repo, prereleases, -1)
 		if err != nil {
-			log.Printf("Failed to get latest %ss for %s: %v", releaseType, repoName, err)
+			log.WithFields(log.Fields{
+				"releaseType": releaseType,
+				"repoName":    repoName,
+				"error":       err,
+			}).Error("Failed to get latest releases")
 			time.Sleep(intervalTime)
 			goto LoadNewReleases
 		}
 
 		newReleases := checkForNewReleases(latestReleases, loadedReleasesMap)
 		if len(newReleases) == 0 {
-			log.Printf("No new %ss for %s\n", releaseType, repoName)
+			log.WithFields(log.Fields{
+				"releaseType": releaseType,
+				"repoName":    repoName,
+			}).Info("No new releases")
 		} else {
 			for _, release := range newReleases {
-				log.Printf("Found new %s for %s: %v\n", releaseType, repoName, release.GetTagName())
+				log.WithFields(log.Fields{
+					"releaseType": releaseType,
+					"repoName":    repoName,
+					"release":     release.GetTagName(),
+				}).Info("Found new release")
 				errors := newReleaseActions(repo, release, payloads)
 				if len(errors) != 0 {
 					for _, err := range errors {
-						log.Printf("Action failed for new %s %s (%s): %v", releaseType, repoName, release.GetTagName(), err)
+						log.WithFields(log.Fields{
+							"releaseType": releaseType,
+							"repoName":    repoName,
+							"release":     release.GetTagName(),
+							"actionError": err,
+						}).Error("Action failed")
 					}
 				}
 			}
@@ -139,7 +166,10 @@ func loadReleasesFromFile(repo RepositoryEntry, prereleases bool) (map[string]bo
 			return nil, err
 		}
 	} else if os.IsNotExist(err) {
-		log.Printf("release history file doesn't exist for %s/%s, initializing such now...", repo.Owner, repo.Repo)
+		log.WithFields(log.Fields{
+			"owner": repo.Owner,
+			"repo":  repo.Repo,
+		}).Info("Release history file doesn't exist, initializing such now...")
 		releaseMap, err = loadReleasesFromGithub(repo, prereleases)
 		if err != nil {
 			return nil, err
@@ -184,6 +214,9 @@ func writeReleaseToFile(releaseTag string, repoOwner string, repoName string) er
 	if err != nil {
 		return err
 	}
-	log.Printf("appended releaseTag %s to release history file %s", releaseTag, releaseHistoryFile)
+	log.WithFields(log.Fields{
+		"releaseTag":         releaseTag,
+		"releaseHistoryFile": releaseHistoryFile,
+	}).Info("Appended release tag to release history file")
 	return nil
 }

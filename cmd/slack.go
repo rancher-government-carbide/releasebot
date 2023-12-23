@@ -14,8 +14,8 @@ import (
 var slackurl string = "https://slack.com/api"
 
 var token = os.Getenv("slack_token")
-var releases_channel = os.Getenv("releases_channel")
-var prereleases_channel = os.Getenv("prereleases_channel")
+var releasesChannel = os.Getenv("releases_channel")
+var prereleasesChannel = os.Getenv("prereleases_channel")
 
 func slacknotif(release *github.RepositoryRelease, owner string, repo string) error {
 
@@ -24,11 +24,11 @@ func slacknotif(release *github.RepositoryRelease, owner string, repo string) er
 	}
 
 	publishedDate := release.GetPublishedAt().Time
-	release_type := "Release"
-	channel := releases_channel
+	releaseType := "Release"
+	channel := releasesChannel
 	if release.GetPrerelease() {
-		release_type = "Prerelease"
-		channel = prereleases_channel
+		releaseType = "Prerelease"
+		channel = prereleasesChannel
 	}
 
 	var jsonData = []byte(`{
@@ -38,7 +38,7 @@ func slacknotif(release *github.RepositoryRelease, owner string, repo string) er
 			"type": "header",
 			"text": {
 				"type": "plain_text",
-				"text": "` + owner + `/` + repo + ` -  New ` + release_type + `!"
+				"text": "` + owner + `/` + repo + ` -  New ` + releaseType + `!"
 			}
 		},
 		{

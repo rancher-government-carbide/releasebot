@@ -1,19 +1,23 @@
 package main
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
 
 	var repos []RepositoryEntry
 	if err := loadRepos(&repos); err != nil {
-		log.Fatalf("Error loading repos file: %v", err)
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatalf("Error loading repos file")
 	}
 
 	var payloads []PayloadEntry
 	if err := loadPayloads(&payloads); err != nil {
-		log.Fatalf("Error loading payloads file: %v", err)
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatalf("Error loading payloads file")
 	}
 
 	Monitor(repos, payloads)

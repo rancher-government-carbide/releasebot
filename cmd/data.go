@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 )
 
@@ -14,12 +14,19 @@ const ReleaseFileFormat = "%s/%s-%s"
 func ensureDataFolder(folderPath string) error {
 	fileInfo, err := os.Stat(folderPath)
 	if os.IsNotExist(err) {
-		log.Printf("data folder does not exist, creating one now...")
-		os.Mkdir(folderPath, 0755)
+		log.WithFields(log.Fields{
+			"directory": folderPath,
+		}).Info("Data directory does not exist, creating one now...")
+		err = os.Mkdir(folderPath, 0755)
+		if err != nil {
+			return err
+		}
 		return nil
 	} else {
 		if fileInfo.IsDir() {
-			log.Printf("Using existing data folder at %s", folderPath)
+			log.WithFields(log.Fields{
+				"directory": folderPath,
+			}).Info("Using existing data folder")
 			return nil
 		} else {
 			return fmt.Errorf("\"data\" folder cannot be created due to existing\"data\" file")
