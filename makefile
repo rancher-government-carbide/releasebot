@@ -1,55 +1,83 @@
-.PHONY: check test lint container container-push dependencies clean help
-
 BINARY_NAME=releasebot
-CONTAINER_NAME=clanktron/releasebot
+ORG=rancher-government-carbide
+CONTAINER_TAG=$(ORG)/$(BINARY_NAME)
+CONTAINERFILE=./Containerfile
 SRC=./cmd
 VERSION=0.1.2
 COMMIT_HASH=$(shell git rev-parse HEAD)
 GOENV=CGO_ENABLED=0
 BUILD_FLAGS=-ldflags="-X 'main.Version=$(VERSION)'"
 TEST_FLAGS=-v -cover -count 1
-CLI=nerdctl
+ARTIFACT_DIR=dist
 DATA_FOLDER=./data
+CLI=nerdctl
 
-# Build the binary
 $(BINARY_NAME):
-	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GOENV) go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GOENV) go build $(BUILD_FLAGS) -o $(BINARY_NAME) $(SRC) ## Build binary (default)
 
-check: test lint
+.PHONY: check
+check: test lint ## Test and lint
 
-# Test the binary
-test:
-	go test $(TEST_FLAGS) $(SRC) 
+.PHONY: test
+test: ## Run go tests
+	go test $(TEST_FLAGS) ./...
 
-# Run linters
-lint:
-	go vet $(SRC)
-	staticcheck $(SRC)
+.PHONY: lint
+lint: ## Run go vet and staticcheck against codebase
+	go vet ./...
+	staticcheck ./...
 
-# Build the container image
-container: clean
-	$(CLI) build -t $(CONTAINER_NAME):$(COMMIT_HASH) -t $(CONTAINER_NAME):latest .
+.PHONY: container
+container: clean ## Build the container
+	$(CLI) build -t $(CONTAINER_TAG):$(COMMIT_HASH) .
 	
-# Push the binary
-container-push: container
-	$(CLI) push $(CONTAINER_NAME):$(COMMIT_HASH) && $(CLI) push $(CONTAINER_NAME):latest
+.PHONY: container-push
+container-push: ## Push the container
+	$(CLI) push $(CONTAINER_TAG):$(COMMIT_HASH)
 
-dependencies:
+.PHONY: container-push
+container-build-and-push: container container-push ## Build and push the container
+
+.PHONY: dependencies
+dependencies: ## Run go mod and go get to ensure dependencies
 	go mod tidy && go get -v -d ./...
 
-# Clean the binary
-clean:
-	rm -rf $(BINARY_NAME) $(DATA_FOLDER)
+.PHONY: release
+release: build-linux build-darwin build-windows package-chart checksums ## Build helm chart and binaries for all platforms
 
-# Show help
+.PHONY: release-windows
+build-windows: ## Build all arches for windows
+	make GOOS=windows  GOARCH=amd64 BINARY_NAME=$(ARTIFACT_DIR)/$(BINARY_NAME)-windows-amd64-$(VERSION)
+	make GOOS=windows GOARCH=arm64 BINARY_NAME=$(ARTIFACT_DIR)/$(BINARY_NAME)-windows-arm64-$(VERSION)
+
+.PHONY: release-darwin
+build-darwin: ## Build all arches for darwin
+	make GOOS=darwin GOARCH=amd64 BINARY_NAME=$(ARTIFACT_DIR)/$(BINARY_NAME)-darwin-amd64-$(VERSION)
+	make GOOS=darwin GOARCH=arm64 BINARY_NAME=$(ARTIFACT_DIR)/$(BINARY_NAME)-darwin-arm64-$(VERSION)
+
+.PHONY: release-linux
+build-linux: ## Build all arches for linux
+	make GOOS=linux GOARCH=amd64 BINARY_NAME=$(ARTIFACT_DIR)/$(BINARY_NAME)-linux-amd64-$(VERSION)
+	make GOOS=linux  GOARCH=arm64 BINARY_NAME=$(ARTIFACT_DIR)/$(BINARY_NAME)-linux-arm64-$(VERSION)
+	make GOOS=linux  GOARCH=riscv64 BINARY_NAME=$(ARTIFACT_DIR)/$(BINARY_NAME)-linux-riscv64-$(VERSION)
+
+.PHONY: release-chart
+package-chart: ## Package helm chart
+	helm package -u ./chart -d $(ARTIFACT_DIR)
+
+.PHONY: checksums
+checksums: ## Generate release asset checksums
+	shasum -a 256 $(ARTIFACT_DIR)/* | tee $(ARTIFACT_DIR)/checksums.txt
+
+.PHONY: clean
+clean: ## Clean workspace
+	rm -rf $(BINARY_NAME) $(ARTIFACT_DIR)/* $(DATA_FOLDER)
+
+.PHONY: help
 help:
-	@printf "Available targets:\n"
-	@printf "  $(BINARY_NAME) 		Build the binary (default)\n"
-	@printf "  test 			Run all unit tests\n"
-	@printf "  lint 			Run go vet and staticcheck\n"
-	@printf "  check 		Test and lint the binary\n"
-	@printf "  container 		Build the container\n"
-	@printf "  container-push 	Build and push the container\n"
-	@printf "  dependencies 		Ensure dependencies are available\n"
-	@printf "  clean 		Clean build results and data folder\n"
-	@printf "  help 			Show help\n"
+	@echo "Available targets:"
+	@if [ -t 1 ]; then \
+		awk -F ':|##' '/^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$NF }' $(MAKEFILE_LIST) | grep -v '^help:'; \
+	else \
+		awk -F ':|##' '/^[a-zA-Z0-9_-]+:.*?##/ { printf "  %-20s %s\n", $$1, $$NF }' $(MAKEFILE_LIST) | grep -v '^help:'; \
+	fi
