@@ -145,15 +145,6 @@ helm install $HELM_RELEASE_NAME ./chart --values $VALUES_FILE
 #### Build
 ```bash
 make help
-# Available targets:
-#   releasebot 		Build the binary (default)
-#   test 			Run all unit tests
-#   lint 			Run go vet and staticcheck
-#   check 		Test and lint the binary
-#   container 		Build the container
-#   container-push 	Build and push the container
-#   clean 		Clean build results and data folder
-#   help 			Show help
 ```
 
 #### Git Hooks
