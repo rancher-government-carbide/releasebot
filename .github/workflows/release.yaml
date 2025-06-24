@@ -117,3 +117,29 @@ jobs:
         run: gh pr create -B main -H "$BRANCH_NAME" --title "Merge $BRANCH_NAME into main" --body 'Created by Github release action'
         env:
           GITHUB_TOKEN: ${{ github.token }}
+
+  containerize-the-thing:
+    name: 🐋
+    strategy:
+      matrix:
+        include:
+          - { stage: docker, os: linux }
+    runs-on: ${{ vars.CARBIDE_RUNNER_LINUX }}
+    steps:
+      - # https://github.com/actions/checkout
+        uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - # https://github.com/rancher-government-carbide/ssf-actions/blob/main/docker-build
+        id: docker
+        uses: rancher-government-carbide/ssf-actions/docker-base-build@main
+        with:
+          image-tag: ghcr.io/${{ github.repository_owner }}/ssf/releasebot:${{ github.ref_name }}
+          image-path: ${{ github.repository_owner }}/ssf/releasebot
+          image-title: releasebot
+          build-context: .
+          build-file: ./Containerfile
+          build-platforms: |
+            ${{ matrix.os }}/amd64
+    outputs:
+      image-url: ghcr.io/${{ github.repository_owner }}/ssf/releasebot
+      image-tag: ${{ github.ref_name }}
