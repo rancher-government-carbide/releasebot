@@ -61,6 +61,7 @@ repos.json:
 #### Fields:
 - **owner (string):** The owner or organization name of the GitHub repository.
 - **repo (string):** The name of the GitHub repository.
+- **product (string, optional):** Value substituted for `$PRODUCT` in payloads. Defaults to the repo name; set it when the product name differs from the repository name.
 - **slack (boolean, optional):** A flag indicating whether Slack notifications are enabled for this repository. It can be true or false (defaults to false).
 - **prereleases (boolean, optional):** A flag indicating whether pre-releases should be monitored as well for this repository. It can be true or false (defaults to false).
 - **payloads (array of strings):** an array of payload types associated with this repository. Possible values include any names of payloads specified in payloads.json.
@@ -76,7 +77,7 @@ payloads.json:
         "name": "standard",
         "url": "https://el-example-listener.tekton.svc.cluster.local:8080",
         "payload": {
-            "Product": "$REPO",
+            "Product": "$PRODUCT",
             "Release": "$RELEASE.TAGNAME"
         }
     },
@@ -112,6 +113,7 @@ Available Variables:
 | Variable              | Description
 | --------------------  | -----------
 | $REPO                  | Name of the repository
+| $PRODUCT               | Product name (the repo's `product` field, or the repo name if unset)
 | $REPO.URL              | ssh url of the repository
 | $RELEASE.TAGNAME       | Tag corresponding to the release
 | $RELEASE.PRERELEASE    | Stringified boolean of whether release is a prerelease

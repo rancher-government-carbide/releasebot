@@ -3,7 +3,7 @@
         "name": "standard",
         "url": "http://localhost:8080",
         "payload": {
-            "Product": "$REPO",
+            "Product": "$PRODUCT",
             "Release": "$RELEASE.TAGNAME"
         }
     },

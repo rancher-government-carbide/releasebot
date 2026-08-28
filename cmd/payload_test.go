@@ -225,3 +225,33 @@ func TestSendPayload(t *testing.T) {
 		t.Fatalf("sendPayload failed: %v", err)
 	}
 }
+
+func TestParsePayloadProduct(t *testing.T) {
+	release := &github.RepositoryRelease{TagName: github.String("v1.0.0"), Author: &github.User{}}
+	payload := PayloadEntry{Name: "standard", Payload: json.RawMessage(`{"Product": "$PRODUCT"}`)}
+
+	tests := []struct {
+		name     string
+		repo     RepositoryEntry
+		expected string
+	}{
+		{"defaults to repo name", RepositoryEntry{Owner: "harvester", Repo: "harvester"}, "harvester"},
+		{"uses product override", RepositoryEntry{Owner: "harvester", Repo: "harvester", Product: "harvester-os"}, "harvester-os"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, err := parsePayload(release, tc.repo, payload)
+			if err != nil {
+				t.Fatalf("parsePayload failed: %v", err)
+			}
+			var got map[string]string
+			if err := json.Unmarshal(out, &got); err != nil {
+				t.Fatalf("unmarshal failed: %v", err)
+			}
+			if got["Product"] != tc.expected {
+				t.Errorf("Product = %q, want %q", got["Product"], tc.expected)
+			}
+		})
+	}
+}
