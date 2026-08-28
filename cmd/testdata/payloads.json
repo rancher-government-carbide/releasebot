@@ -3,7 +3,7 @@
         "name": "standard",
         "url": "https://el-example-listener.tekton.svc.cluster.local:8080",
         "payload": {
-            "Product": "$REPO",
+            "Product": "$PRODUCT",
             "Release": "$RELEASE.TAGNAME"
         }
     },

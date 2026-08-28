@@ -36,8 +36,14 @@ func parsePayload(release *github.RepositoryRelease, repo RepositoryEntry, paylo
 
 	var repo_url string = fmt.Sprintf("git@github.com:%s/%s", repo.Owner, repo.Repo)
 
+	product := repo.Product
+	if product == "" {
+		product = repo.Repo
+	}
+
 	variables := map[string]string{
 		"REPO":                repo.Repo,
+		"PRODUCT":             product,
 		"REPO.URL":            repo_url,
 		"RELEASE.TAGNAME":     release.GetTagName(),
 		"RELEASE.PRERELEASE":  strconv.FormatBool(release.GetPrerelease()),

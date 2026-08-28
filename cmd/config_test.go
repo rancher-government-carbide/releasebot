@@ -159,7 +159,7 @@ func Test_loadPayloads(t *testing.T) {
 			Url:  "https://el-example-listener.tekton.svc.cluster.local:8080",
 			Payload: json.RawMessage(`
 				{
-					"Product": "$REPO",
+					"Product": "$PRODUCT",
             		"Release": "$RELEASE.TAGNAME"
 				}
         `),

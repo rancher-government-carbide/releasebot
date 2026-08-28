@@ -10,6 +10,7 @@ import (
 type RepositoryEntry struct {
 	Owner       string     `json:"owner"`
 	Repo        string     `json:"repo"`
+	Product     string     `json:"product"`
 	Prereleases bool       `json:"prereleases"`
 	Payloads    PayloadMap `json:"payloads"`
 	Slack       bool       `json:"slack"`
